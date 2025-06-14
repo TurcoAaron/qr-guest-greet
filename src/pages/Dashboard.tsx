@@ -118,7 +118,7 @@ const Dashboard = () => {
               <p className="text-gray-600">Bienvenido, {user.email}</p>
             </div>
             <div className="flex items-center space-x-4">
-              <Button onClick={() => navigate('/generar-qr')} className="flex items-center space-x-2">
+              <Button onClick={() => navigate('/crear-evento')} className="flex items-center space-x-2">
                 <Plus className="w-4 h-4" />
                 <span>Crear Evento</span>
               </Button>
@@ -147,7 +147,7 @@ const Dashboard = () => {
                 <CardContent className="text-center py-8">
                   <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500">No tienes eventos activos</p>
-                  <Button onClick={() => navigate('/generar-qr')} className="mt-4">
+                  <Button onClick={() => navigate('/crear-evento')} className="mt-4">
                     Crear primer evento
                   </Button>
                 </CardContent>
