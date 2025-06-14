@@ -14,6 +14,7 @@ import TomarAsistencia from "./pages/TomarAsistencia";
 import GenerarQR from "./pages/GenerarQR";
 import EscanearQR from "./pages/EscanearQR";
 import Administrar from "./pages/Administrar";
+import CrearEvento from "./pages/CrearEvento";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,15 @@ const App = () => (
               } 
             />
             <Route path="/invitacion" element={<Invitacion />} />
+            <Route path="/tomar-asistencia/:eventoId" element={<TomarAsistencia />} />
+            <Route 
+              path="/crear-evento" 
+              element={
+                <ProtectedRoute>
+                  <CrearEvento />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/generar-qr" 
               element={
