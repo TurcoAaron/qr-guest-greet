@@ -9,7 +9,146 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      attendances: {
+        Row: {
+          checked_in_at: string
+          checked_in_by: string | null
+          event_id: string
+          guest_id: string
+          id: string
+        }
+        Insert: {
+          checked_in_at?: string
+          checked_in_by?: string | null
+          event_id: string
+          guest_id: string
+          id?: string
+        }
+        Update: {
+          checked_in_at?: string
+          checked_in_by?: string | null
+          event_id?: string
+          guest_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendances_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          event_code: string
+          id: string
+          location: string | null
+          name: string
+          organizer_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          event_code: string
+          id?: string
+          location?: string | null
+          name: string
+          organizer_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          event_code?: string
+          id?: string
+          location?: string | null
+          name?: string
+          organizer_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      guests: {
+        Row: {
+          created_at: string
+          email: string | null
+          event_id: string
+          id: string
+          invitation_code: string
+          name: string
+          qr_code_data: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          event_id: string
+          id?: string
+          invitation_code: string
+          name: string
+          qr_code_data: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          event_id?: string
+          id?: string
+          invitation_code?: string
+          name?: string
+          qr_code_data?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

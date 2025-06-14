@@ -1,14 +1,34 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { QrCode, Users, UserCheck, Settings } from "lucide-react";
+import { QrCode, Users, UserCheck, Settings, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
+          <div className="flex justify-between items-center mb-8">
+            <div></div>
+            <div className="flex space-x-4">
+              {user ? (
+                <Button asChild>
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+              ) : (
+                <Button asChild>
+                  <Link to="/auth" className="flex items-center space-x-2">
+                    <LogIn className="w-4 h-4" />
+                    <span>Iniciar Sesión</span>
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Sistema de Asistencia QR
           </h1>
@@ -33,7 +53,7 @@ const Index = () => {
           </Card>
 
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/generar-qr">
+            <Link to={user ? "/generar-qr" : "/auth"}>
               <CardHeader className="text-center">
                 <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                   <QrCode className="w-6 h-6 text-green-600" />
@@ -47,7 +67,7 @@ const Index = () => {
           </Card>
 
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/escanear">
+            <Link to={user ? "/escanear" : "/auth"}>
               <CardHeader className="text-center">
                 <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                   <UserCheck className="w-6 h-6 text-purple-600" />
@@ -61,7 +81,7 @@ const Index = () => {
           </Card>
 
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/administrar">
+            <Link to={user ? "/administrar" : "/auth"}>
               <CardHeader className="text-center">
                 <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
                   <Settings className="w-6 h-6 text-orange-600" />
