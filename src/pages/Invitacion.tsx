@@ -1,29 +1,129 @@
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Download } from "lucide-react";
+import { Calendar, MapPin, Clock, Download, ArrowLeft, XCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface Invitado {
+  id: string;
+  name: string;
+  email: string;
+  invitation_code: string;
+  qr_code_data: string;
+}
+
+interface Evento {
+  id: string;
+  name: string;
+  description: string;
+  date: string;
+  location: string;
+}
 
 const Invitacion = () => {
   const [searchParams] = useSearchParams();
-  const [invitadoNombre, setInvitadoNombre] = useState("");
-  const [qrData, setQrData] = useState("");
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [invitado, setInvitado] = useState<Invitado | null>(null);
+  const [evento, setEvento] = useState<Evento | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const nombre = searchParams.get("nombre") || "Invitado";
-    setInvitadoNombre(nombre);
-    
-    // Generar datos para el QR que incluyan el nombre y un ID único
-    const invitadoId = `${nombre}-${Date.now()}`;
-    setQrData(invitadoId);
+    const codigo = searchParams.get("codigo");
+    if (codigo) {
+      cargarInvitacion(codigo);
+    } else {
+      // Si no hay código, mostrar error
+      setLoading(false);
+    }
   }, [searchParams]);
 
-  const descargarInvitacion = () => {
-    // Aquí se podría implementar la descarga de la invitación como PDF
-    console.log("Descargando invitación para:", invitadoNombre);
+  const cargarInvitacion = async (codigo: string) => {
+    try {
+      // Cargar información del invitado
+      const { data: invitadoData, error: invitadoError } = await supabase
+        .from('guests')
+        .select(`
+          *,
+          events (
+            id,
+            name,
+            description,
+            date,
+            location
+          )
+        `)
+        .eq('invitation_code', codigo)
+        .single();
+
+      if (invitadoError || !invitadoData) {
+        toast({
+          title: "Error",
+          description: "No se encontró la invitación",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setInvitado(invitadoData);
+      setEvento(invitadoData.events);
+    } catch (error) {
+      console.error('Error cargando invitación:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la invitación",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const descargarInvitacion = () => {
+    toast({
+      title: "Función en desarrollo",
+      description: "La descarga de invitaciones estará disponible pronto",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Cargando invitación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!invitado || !evento) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <Card className="shadow-2xl border-0">
+              <CardContent className="p-8 text-center">
+                <XCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
+                <h2 className="text-xl font-bold mb-2">Invitación no encontrada</h2>
+                <p className="text-gray-600 mb-6">
+                  No se pudo encontrar la invitación. Verifica que el código sea correcto.
+                </p>
+                <Button onClick={() => navigate('/')}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Volver al inicio
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 py-8">
@@ -33,8 +133,17 @@ const Invitacion = () => {
             {/* Header decorativo */}
             <div className="h-32 bg-gradient-to-r from-purple-600 to-pink-600 relative">
               <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-              <div className="relative z-10 flex items-center justify-center h-full">
+              <div className="relative z-10 flex items-center justify-between h-full px-6">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate('/')}
+                  className="text-white hover:bg-white/20"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Inicio
+                </Button>
                 <h1 className="text-white text-2xl font-bold">INVITACIÓN</h1>
+                <div></div>
               </div>
             </div>
 
@@ -43,19 +152,20 @@ const Invitacion = () => {
                 ¡Estás Invitado!
               </CardTitle>
               <p className="text-xl text-purple-600 font-semibold">
-                Querido/a {invitadoNombre}
+                Querido/a {invitado.name}
               </p>
             </CardHeader>
 
             <CardContent className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                  Celebración Especial
+                  {evento.name}
                 </h2>
-                <p className="text-gray-600 leading-relaxed">
-                  Nos complace invitarte a nuestra celebración especial. 
-                  Tu presencia hará que este evento sea aún más memorable.
-                </p>
+                {evento.description && (
+                  <p className="text-gray-600 leading-relaxed">
+                    {evento.description}
+                  </p>
+                )}
               </div>
 
               {/* Detalles del evento */}
@@ -64,7 +174,14 @@ const Invitacion = () => {
                   <Calendar className="w-5 h-5 text-purple-600" />
                   <div>
                     <p className="font-semibold text-gray-800">Fecha</p>
-                    <p className="text-gray-600">Sábado, 15 de Diciembre 2024</p>
+                    <p className="text-gray-600">
+                      {new Date(evento.date).toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
                   </div>
                 </div>
                 
@@ -72,18 +189,24 @@ const Invitacion = () => {
                   <Clock className="w-5 h-5 text-purple-600" />
                   <div>
                     <p className="font-semibold text-gray-800">Hora</p>
-                    <p className="text-gray-600">19:00 hrs</p>
+                    <p className="text-gray-600">
+                      {new Date(evento.date).toLocaleTimeString('es-ES', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })} hrs
+                    </p>
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-3">
-                  <MapPin className="w-5 h-5 text-purple-600" />
-                  <div>
-                    <p className="font-semibold text-gray-800">Lugar</p>
-                    <p className="text-gray-600">Salón de Eventos Villa Hermosa</p>
-                    <p className="text-sm text-gray-500">Av. Principal #123, Ciudad</p>
+                {evento.location && (
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="font-semibold text-gray-800">Lugar</p>
+                      <p className="text-gray-600">{evento.location}</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Código QR */}
@@ -94,15 +217,18 @@ const Invitacion = () => {
                 <div className="flex justify-center mb-4">
                   <div className="bg-white p-4 rounded-lg shadow-md">
                     <QRCodeSVG
-                      value={qrData}
+                      value={invitado.qr_code_data}
                       size={150}
                       level="M"
                       includeMargin={true}
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Presenta este código QR al llegar al evento para registrar tu asistencia
+                <p className="text-sm text-gray-600 mb-2">
+                  Presenta este código QR al llegar al evento
+                </p>
+                <p className="text-xs text-gray-500 font-mono">
+                  Código: {invitado.invitation_code}
                 </p>
               </div>
 

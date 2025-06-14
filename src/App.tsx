@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Invitacion from "./pages/Invitacion";
+import TomarAsistencia from "./pages/TomarAsistencia";
 import GenerarQR from "./pages/GenerarQR";
 import EscanearQR from "./pages/EscanearQR";
 import Administrar from "./pages/Administrar";
