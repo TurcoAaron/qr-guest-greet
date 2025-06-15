@@ -101,6 +101,7 @@ export type Database = {
           status: string
           template_id: string | null
           updated_at: string
+          validate_full_attendance: boolean | null
         }
         Insert: {
           created_at?: string
@@ -119,6 +120,7 @@ export type Database = {
           status?: string
           template_id?: string | null
           updated_at?: string
+          validate_full_attendance?: boolean | null
         }
         Update: {
           created_at?: string
@@ -137,6 +139,7 @@ export type Database = {
           status?: string
           template_id?: string | null
           updated_at?: string
+          validate_full_attendance?: boolean | null
         }
         Relationships: []
       }
