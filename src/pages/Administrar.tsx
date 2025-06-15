@@ -131,6 +131,11 @@ const Administrar = () => {
     });
   };
 
+  const asistenciasProcesadas = procesarAsistencias();
+  const asistenciasFiltradas = asistenciasProcesadas.filter(asistencia =>
+    filtro === "" || asistencia.nombre.toLowerCase().includes(filtro.toLowerCase())
+  );
+
   const exportarCSV = () => {
     const headers = ["Nombre", "Fecha", "Hora", "Código"];
     const rows = asistenciasProcesadas.map(a => [
@@ -178,7 +183,7 @@ const Administrar = () => {
     totalAsistenciasLocal: asistencias.length,
     totalAdultos: invitados.reduce((total, inv) => total + (inv.adults_count || 0), 0),
     totalNiños: invitados.reduce((total, inv) => total + (inv.children_count || 0), 0),
-    totalMascotas: invitados.reduce((total, inv) => total + (inv.pets_count || 0), 0),
+    totalMascotas: invitados.reduce((total, inv) => total + ((inv as any).pets_count || 0), 0),
   };
 
   // Estadísticas por evento seleccionado
@@ -396,7 +401,7 @@ const Administrar = () => {
                             <TableCell>{asistencia.events?.name || 'N/A'}</TableCell>
                             <TableCell>{asistencia.actual_adults_count || asistencia.guests?.adults_count || '-'}</TableCell>
                             <TableCell>{asistencia.actual_children_count || asistencia.guests?.children_count || '-'}</TableCell>
-                            <TableCell>{asistencia.actual_pets_count || asistencia.guests?.pets_count || '-'}</TableCell>
+                            <TableCell>{asistencia.actual_pets_count || (asistencia.guests as any)?.pets_count || '-'}</TableCell>
                             <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
                           </TableRow>
                         ))}
@@ -437,7 +442,7 @@ const Administrar = () => {
                         ).length;
                         const adultosEvento = invitadosEvento.reduce((total, inv) => total + (inv.adults_count || 0), 0);
                         const niñosEvento = invitadosEvento.reduce((total, inv) => total + (inv.children_count || 0), 0);
-                        const mascotasEvento = invitadosEvento.reduce((total, inv) => total + (inv.pets_count || 0), 0);
+                        const mascotasEvento = invitadosEvento.reduce((total, inv) => total + ((inv as any).pets_count || 0), 0);
                         const porcentaje = confirmadosEvento > 0 ? Math.round((presentesEvento / confirmadosEvento) * 100) : 0;
 
                         return (

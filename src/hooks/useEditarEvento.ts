@@ -73,7 +73,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
         setTipoEvento(eventoData.event_type || "");
         setCodigoVestimenta(eventoData.dress_code || "");
         setTemplateId(eventoData.template_id || "modern");
-        setValidateFullAttendance(eventoData.validate_full_attendance || false);
+        setValidateFullAttendance((eventoData as any).validate_full_attendance || false);
       }
 
       // Cargar imágenes del evento
@@ -113,7 +113,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
           passes_count: inv.passes_count || 1,
           adults_count: inv.adults_count || 1,
           children_count: inv.children_count || 0,
-          pets_count: inv.pets_count || 0,
+          pets_count: (inv as any).pets_count || 0,
         })));
       }
 
