@@ -92,7 +92,7 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
         </p>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredTemplates.map((template) => (
           <Card 
             key={template.id}
@@ -104,9 +104,9 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
             onClick={() => onTemplateSelect(template.id)}
           >
             <CardContent className="p-4">
-              {/* Miniatura del template */}
-              <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                <div className="scale-[0.15] origin-top-left w-[400px] h-[600px] absolute -top-2 -left-2">
+              {/* Miniatura del template con ancho completo */}
+              <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
+                <div className="scale-[0.2] origin-top-left w-[500px] h-[700px] absolute -top-4 -left-4">
                   <TemplateRenderer
                     templateId={template.id}
                     invitado={mockGuest}
@@ -140,7 +140,7 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
       {/* Preview Modal */}
       {previewTemplate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto">
+          <div className="bg-white rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">
                 Preview: {templates.find(t => t.id === previewTemplate)?.name}

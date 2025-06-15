@@ -10,8 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CalendarDays, MapPin, Clock, Palette } from "lucide-react";
+import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2 } from "lucide-react";
 import { TemplateSelector } from "@/components/invitation-templates/TemplateSelector";
+
+interface Invitado {
+  name: string;
+  email: string;
+  phone: string;
+}
 
 const CrearEvento = () => {
   const navigate = useNavigate();
@@ -28,6 +34,9 @@ const CrearEvento = () => {
   const [tipoEvento, setTipoEvento] = useState("");
   const [codigoVestimenta, setCodigoVestimenta] = useState("");
   const [templateId, setTemplateId] = useState("modern");
+  
+  // Estado de invitados
+  const [invitados, setInvitados] = useState<Invitado[]>([]);
 
   const handleBack = () => navigate('/dashboard');
 
@@ -35,6 +44,25 @@ const CrearEvento = () => {
     const timestamp = Date.now().toString().slice(-6);
     const random = Math.random().toString(36).substring(2, 4).toUpperCase();
     return `${timestamp}${random}`;
+  };
+
+  const agregarInvitado = () => {
+    setInvitados([...invitados, { name: "", email: "", phone: "" }]);
+  };
+
+  const eliminarInvitado = (index: number) => {
+    setInvitados(invitados.filter((_, i) => i !== index));
+  };
+
+  const actualizarInvitado = (index: number, field: keyof Invitado, value: string) => {
+    const nuevosInvitados = [...invitados];
+    nuevosInvitados[index][field] = value;
+    setInvitados(nuevosInvitados);
+  };
+
+  const generarCodigoInvitacion = (index: number, codigoEvento: string) => {
+    const numeracion = (index + 1).toString().padStart(2, '0');
+    return `INV-${codigoEvento}-${numeracion}`;
   };
 
   const crearEvento = async () => {
@@ -66,12 +94,14 @@ const CrearEvento = () => {
       return;
     }
 
+    const invitadosValidos = invitados.filter(inv => inv.name.trim());
+
     setLoading(true);
 
     try {
       const codigoEvento = generarCodigoEvento();
 
-      const { data, error } = await supabase
+      const { data: eventoData, error: errorEvento } = await supabase
         .from('events')
         .insert({
           name: nombreEvento.trim(),
@@ -90,14 +120,40 @@ const CrearEvento = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (errorEvento) throw errorEvento;
+
+      // Crear invitados si hay alguno
+      if (invitadosValidos.length > 0) {
+        for (const [index, invitado] of invitadosValidos.entries()) {
+          const codigoInvitacion = generarCodigoInvitacion(index, codigoEvento);
+          const qrData = JSON.stringify({
+            event_id: eventoData.id,
+            event_name: nombreEvento,
+            guest_name: invitado.name,
+            invitation_code: codigoInvitacion
+          });
+
+          const { error: errorInvitado } = await supabase
+            .from('guests')
+            .insert({
+              event_id: eventoData.id,
+              name: invitado.name.trim(),
+              email: invitado.email?.trim() || null,
+              phone: invitado.phone?.trim() || null,
+              invitation_code: codigoInvitacion,
+              qr_code_data: qrData
+            });
+
+          if (errorInvitado) throw errorInvitado;
+        }
+      }
 
       toast({
         title: "¡Evento Creado!",
         description: `Se creó el evento "${nombreEvento}" con código ${codigoEvento}`,
       });
 
-      navigate(`/editar-evento/${data.id}`);
+      navigate(`/editar-evento/${eventoData.id}`);
 
     } catch (error) {
       console.error('Error creando evento:', error);
@@ -274,6 +330,78 @@ const CrearEvento = () => {
                     dress_code: codigoVestimenta
                   }}
                 />
+              </CardContent>
+            </Card>
+
+            {/* Gestión de Invitados */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2">
+                    <Users className="w-5 h-5" />
+                    <span>Invitados ({invitados.filter(inv => inv.name.trim()).length})</span>
+                  </CardTitle>
+                  <Button onClick={agregarInvitado} size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar Invitado
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {invitados.map((invitado, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <Label className="text-xs text-gray-600">Nombre</Label>
+                        <Input
+                          type="text"
+                          placeholder="Nombre del invitado"
+                          value={invitado.name}
+                          onChange={(e) => actualizarInvitado(index, 'name', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600">Email</Label>
+                        <Input
+                          type="email"
+                          placeholder="Email (opcional)"
+                          value={invitado.email}
+                          onChange={(e) => actualizarInvitado(index, 'email', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600">Teléfono</Label>
+                        <Input
+                          type="tel"
+                          placeholder="Teléfono (opcional)"
+                          value={invitado.phone}
+                          onChange={(e) => actualizarInvitado(index, 'phone', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => eliminarInvitado(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {invitados.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No hay invitados agregados aún</p>
+                      <p className="text-sm">Puedes agregar invitados ahora o después de crear el evento</p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
