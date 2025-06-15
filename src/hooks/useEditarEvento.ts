@@ -116,7 +116,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
           passes_count: inv.passes_count || 1,
           adults_count: inv.adults_count || 1,
           children_count: inv.children_count || 0,
-          pets_count: 0, // Agregar valor por defecto para pets_count
+          pets_count: inv.pets_count || 0, // Leer el valor real de la base de datos
         })));
       }
 
@@ -222,7 +222,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
         if (!invitado.name.trim()) continue;
 
         if (invitado.id) {
-          // Actualizar invitado existente
+          // Actualizar invitado existente - incluir pets_count
           const { error: updateError } = await supabase
             .from('guests')
             .update({
@@ -232,12 +232,13 @@ export const useEditarEvento = (eventoId: string | undefined) => {
               passes_count: invitado.passes_count,
               adults_count: invitado.adults_count,
               children_count: invitado.children_count,
+              pets_count: invitado.pets_count, // Asegurar que se guarda pets_count
             })
             .eq('id', invitado.id);
 
           if (updateError) throw updateError;
         } else {
-          // Crear nuevo invitado
+          // Crear nuevo invitado - incluir pets_count
           const invitationCode = generarCodigoInvitacion(invitados.indexOf(invitado), codigoEvento, invitado.name);
           const qrCodeData = JSON.stringify({
             event_id: eventoId,
@@ -258,6 +259,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
               passes_count: invitado.passes_count,
               adults_count: invitado.adults_count,
               children_count: invitado.children_count,
+              pets_count: invitado.pets_count, // Incluir pets_count al crear
             }]);
 
           if (insertError) throw insertError;
