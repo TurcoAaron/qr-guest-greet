@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2, Image as ImageIcon } from "lucide-react";
 import { TemplateSelector } from "@/components/invitation-templates/TemplateSelector";
+import { ImageUploader } from "@/components/events/ImageUploader";
 
 interface Invitado {
   name: string;
@@ -34,6 +34,7 @@ const CrearEvento = () => {
   const [tipoEvento, setTipoEvento] = useState("");
   const [codigoVestimenta, setCodigoVestimenta] = useState("");
   const [templateId, setTemplateId] = useState("modern");
+  const [imageUrl, setImageUrl] = useState("");
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([]);
@@ -115,7 +116,8 @@ const CrearEvento = () => {
           status: 'upcoming',
           event_type: tipoEvento?.trim() || null,
           dress_code: codigoVestimenta?.trim() || null,
-          template_id: templateId
+          template_id: templateId,
+          image_url: imageUrl || null
         })
         .select()
         .single();
@@ -240,6 +242,23 @@ const CrearEvento = () => {
               </CardContent>
             </Card>
 
+            {/* Imagen del evento */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <ImageIcon className="w-5 h-5" />
+                  <span>Imagen del Evento</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ImageUploader
+                  onImageUploaded={setImageUrl}
+                  currentImageUrl={imageUrl}
+                  onImageRemoved={() => setImageUrl("")}
+                />
+              </CardContent>
+            </Card>
+
             {/* Fecha y ubicación */}
             <Card>
               <CardHeader>
@@ -327,7 +346,8 @@ const CrearEvento = () => {
                     end_date: fechaFin,
                     location: ubicacion,
                     event_type: tipoEvento,
-                    dress_code: codigoVestimenta
+                    dress_code: codigoVestimenta,
+                    image_url: imageUrl
                   }}
                 />
               </CardContent>

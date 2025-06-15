@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { TemplateRenderer } from "./TemplateRenderer";
+import { TemplatePreviewModal } from "../events/TemplatePreviewModal";
 
 interface TemplateSelectorProps {
   selectedTemplate: string;
@@ -17,6 +18,7 @@ interface TemplateSelectorProps {
     location?: string;
     event_type?: string;
     dress_code?: string;
+    image_url?: string;
   };
 }
 
@@ -74,7 +76,8 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
     end_date: eventData?.end_date || "",
     location: eventData?.location || "Salón de Eventos",
     event_type: eventData?.event_type || "social",
-    dress_code: eventData?.dress_code || "formal"
+    dress_code: eventData?.dress_code || "formal",
+    image_url: eventData?.image_url
   };
 
   // Filtrar templates por tipo de evento
@@ -105,8 +108,8 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
           >
             <CardContent className="p-4">
               {/* Miniatura del template con ancho completo */}
-              <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                <div className="scale-[0.2] origin-top-left w-[500px] h-[700px] absolute -top-4 -left-4">
+              <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
+                <div className="scale-[0.25] origin-top-left w-[400px] h-[600px] absolute -top-4 -left-4">
                   <TemplateRenderer
                     templateId={template.id}
                     invitado={mockGuest}
@@ -138,31 +141,16 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
       </div>
 
       {/* Preview Modal */}
-      {previewTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">
-                Preview: {templates.find(t => t.id === previewTemplate)?.name}
-              </h3>
-              <Button
-                variant="outline"
-                onClick={() => setPreviewTemplate(null)}
-              >
-                Cerrar
-              </Button>
-            </div>
-            
-            <div className="border rounded-lg overflow-hidden w-full">
-              <TemplateRenderer
-                templateId={previewTemplate}
-                invitado={mockGuest}
-                evento={mockEvent}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <TemplatePreviewModal
+        isOpen={!!previewTemplate}
+        onClose={() => setPreviewTemplate(null)}
+        templateId={previewTemplate || 'modern'}
+        templateName={templates.find(t => t.id === previewTemplate)?.name || ''}
+        eventData={eventData || {
+          name: "Mi Evento Especial",
+          start_date: new Date().toISOString()
+        }}
+      />
     </div>
   );
 };

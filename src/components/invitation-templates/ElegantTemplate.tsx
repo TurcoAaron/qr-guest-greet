@@ -1,14 +1,19 @@
 
-import { Calendar, MapPin, Clock } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { MapPin, Calendar, Clock, Palette } from "lucide-react";
+import QRCode from "qrcode.react";
+import { RSVPSection } from "./RSVPSection";
 
 interface ElegantTemplateProps {
   invitado: {
+    id?: string;
     name: string;
     invitation_code?: string;
     qr_code_data?: string;
   };
   evento: {
+    id?: string;
     name: string;
     description?: string;
     start_date: string;
@@ -16,220 +21,192 @@ interface ElegantTemplateProps {
     location?: string;
     event_type?: string;
     dress_code?: string;
+    image_url?: string;
   };
+  showRSVP?: boolean;
 }
 
-export const ElegantTemplate = ({ invitado, evento }: ElegantTemplateProps) => {
-  const formatearTipoEvento = (tipo: string) => {
-    const tipos = {
-      conference: "Conferencia",
-      wedding: "Boda", 
-      birthday: "Cumpleaños",
-      corporate: "Corporativo",
-      social: "Social",
-      workshop: "Taller",
-      seminar: "Seminario",
-      other: "Otro"
-    };
-    return tipos[tipo as keyof typeof tipos] || tipo;
+export const ElegantTemplate = ({ invitado, evento, showRSVP = false }: ElegantTemplateProps) => {
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es });
+    } catch {
+      return dateString;
+    }
   };
 
-  const formatearCodigoVestimenta = (codigo: string) => {
-    const codigos = {
-      formal: "Formal",
-      "semi-formal": "Semi-formal",
-      casual: "Casual",
-      business: "Ejecutivo",
-      cocktail: "Cocktail",
-      "black-tie": "Etiqueta",
-      "white-tie": "Etiqueta Rigurosa",
-      theme: "Temático"
+  const formatTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, "HH:mm", { locale: es });
+    } catch {
+      return "";
+    }
+  };
+
+  const getDressCodeText = (code: string) => {
+    const codes: { [key: string]: string } = {
+      'formal': 'Formal',
+      'semi-formal': 'Semi-formal',
+      'casual': 'Casual',
+      'business': 'Ejecutivo',
+      'cocktail': 'Cocktail',
+      'black-tie': 'Etiqueta',
+      'white-tie': 'Etiqueta Rigurosa',
+      'theme': 'Temático'
     };
-    return codigos[codigo as keyof typeof codigos] || codigo;
+    return codes[code] || code;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-stone-200 relative">
-      {/* Elementos decorativos elegantes */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-20 w-1 h-40 bg-gradient-to-b from-amber-400 to-transparent rotate-12"></div>
-        <div className="absolute bottom-20 right-20 w-1 h-40 bg-gradient-to-t from-amber-400 to-transparent -rotate-12"></div>
-      </div>
+    <div className="bg-gradient-to-br from-amber-50 to-orange-100 min-h-screen">
+      {/* Decoración superior */}
+      <div className="h-8 bg-gradient-to-r from-amber-400 to-orange-500"></div>
+      
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        
+        {/* Header elegante */}
+        <div className="text-center mb-12">
+          <div className="inline-block">
+            <div className="bg-white rounded-lg shadow-xl p-8 border-2 border-amber-200">
+              {evento.image_url && (
+                <div className="mb-6">
+                  <img 
+                    src={evento.image_url} 
+                    alt={evento.name}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                </div>
+              )}
+              
+              <div className="border-b-2 border-amber-300 pb-4 mb-4">
+                <h1 className="text-4xl md:text-5xl font-serif text-amber-800 mb-4">
+                  {evento.name}
+                </h1>
+                {evento.description && (
+                  <p className="text-xl text-amber-700 font-light italic">
+                    {evento.description}
+                  </p>
+                )}
+              </div>
+              
+              <p className="text-2xl font-serif text-amber-800">
+                Estimado/a {invitado.name}
+              </p>
+              <p className="text-lg text-amber-700 mt-2">
+                Tienes el honor de estar invitado/a
+              </p>
+            </div>
+          </div>
+        </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-5xl">
-          <div className="bg-white shadow-2xl border border-gray-200 relative">
-            {/* Borde dorado elegante */}
-            <div className="absolute inset-4 border-2 border-amber-400 pointer-events-none"></div>
+        {/* Detalles del evento en tarjetas elegantes */}
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
+          
+          {/* Fecha y hora */}
+          <div className="bg-white rounded-lg shadow-lg p-6 border border-amber-200">
+            <div className="flex items-center mb-4">
+              <Calendar className="w-6 h-6 text-amber-600 mr-3" />
+              <h3 className="text-xl font-serif text-amber-800">Fecha y Hora</h3>
+            </div>
             
-            <div className="p-16 relative">
-              {/* Header elegante */}
-              <div className="text-center mb-16">
-                <div className="inline-block">
-                  <div className="border-b-2 border-amber-400 pb-4 mb-6">
-                    <h1 className="text-6xl font-serif text-gray-800 tracking-wider">INVITACIÓN</h1>
-                  </div>
-                  <div className="flex items-center justify-center space-x-4">
-                    <div className="w-12 h-px bg-amber-400"></div>
-                    <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
-                    <div className="w-12 h-px bg-amber-400"></div>
-                  </div>
-                </div>
+            <div className="space-y-3">
+              <div>
+                <p className="font-medium text-amber-700">Fecha:</p>
+                <p className="text-amber-600 capitalize font-serif">{formatDate(evento.start_date)}</p>
               </div>
-
-              {/* Saludo personalizado */}
-              <div className="text-center mb-16">
-                <h2 className="text-4xl font-serif text-gray-700 mb-4 italic">
-                  Estimado/a
-                </h2>
-                <p className="text-3xl font-serif text-gray-800 font-semibold">
-                  {invitado.name}
-                </p>
-                <div className="mt-6 flex items-center justify-center space-x-4">
-                  <div className="w-8 h-px bg-gray-300"></div>
-                  <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
-                  <div className="w-8 h-px bg-gray-300"></div>
+              
+              <div className="flex items-center space-x-4">
+                <div>
+                  <p className="font-medium text-amber-700">Hora de inicio:</p>
+                  <p className="text-amber-600 font-serif">{formatTime(evento.start_date)}</p>
                 </div>
+                {evento.end_date && (
+                  <div>
+                    <p className="font-medium text-amber-700">Hora de fin:</p>
+                    <p className="text-amber-600 font-serif">{formatTime(evento.end_date)}</p>
+                  </div>
+                )}
               </div>
+            </div>
+          </div>
 
-              <div className="grid lg:grid-cols-2 gap-16 items-start">
-                {/* Información del evento */}
-                <div className="space-y-8">
-                  <div className="text-center lg:text-left">
-                    <h3 className="text-4xl font-serif text-gray-800 mb-6 leading-tight">
-                      {evento.name}
-                    </h3>
-                    {evento.description && (
-                      <p className="text-gray-600 text-lg leading-relaxed font-light italic">
-                        {evento.description}
-                      </p>
-                    )}
-                  </div>
+          {/* Ubicación */}
+          <div className="bg-white rounded-lg shadow-lg p-6 border border-amber-200">
+            <div className="flex items-center mb-4">
+              <MapPin className="w-6 h-6 text-amber-600 mr-3" />
+              <h3 className="text-xl font-serif text-amber-800">Ubicación</h3>
+            </div>
+            
+            <p className="text-amber-600 font-serif">
+              {evento.location || "Por confirmar"}
+            </p>
+          </div>
+        </div>
 
-                  {/* Detalles elegantes */}
-                  <div className="space-y-6 bg-gray-50 p-8 border-l-4 border-amber-400">
-                    <div className="flex items-start space-x-4">
-                      <div className="mt-1">
-                        <Calendar className="w-5 h-5 text-amber-600" />
-                      </div>
-                      <div>
-                        <p className="font-serif font-semibold text-gray-800 text-lg">Fecha</p>
-                        <p className="text-gray-600 font-light">
-                          {new Date(evento.start_date).toLocaleDateString('es-ES', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-4">
-                      <div className="mt-1">
-                        <Clock className="w-5 h-5 text-amber-600" />
-                      </div>
-                      <div>
-                        <p className="font-serif font-semibold text-gray-800 text-lg">Hora</p>
-                        <p className="text-gray-600 font-light">
-                          {new Date(evento.start_date).toLocaleTimeString('es-ES', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })} hrs
-                          {evento.end_date && ` - ${new Date(evento.end_date).toLocaleTimeString('es-ES', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })} hrs`}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {evento.location && (
-                      <div className="flex items-start space-x-4">
-                        <div className="mt-1">
-                          <MapPin className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <div>
-                          <p className="font-serif font-semibold text-gray-800 text-lg">Lugar</p>
-                          <p className="text-gray-600 font-light">{evento.location}</p>
-                        </div>
-                      </div>
-                    )}
+        {/* Código de vestimenta */}
+        {evento.dress_code && (
+          <div className="bg-white rounded-lg shadow-lg p-6 border border-amber-200 mb-12">
+            <div className="flex items-center mb-3">
+              <Palette className="w-6 h-6 text-amber-600 mr-3" />
+              <h3 className="text-xl font-serif text-amber-800">Código de Vestimenta</h3>
+            </div>
+            <p className="text-amber-700 font-serif font-medium">{getDressCodeText(evento.dress_code)}</p>
+          </div>
+        )}
 
-                    {evento.event_type && (
-                      <div className="flex items-start space-x-4">
-                        <div className="mt-1">
-                          <span className="text-amber-600 text-lg">📋</span>
-                        </div>
-                        <div>
-                          <p className="font-serif font-semibold text-gray-800 text-lg">Tipo de Evento</p>
-                          <p className="text-gray-600 font-light">{formatearTipoEvento(evento.event_type)}</p>
-                        </div>
-                      </div>
-                    )}
+        {/* Sección RSVP */}
+        {showRSVP && evento.id && invitado.id && (
+          <div className="mb-12">
+            <RSVPSection 
+              eventId={evento.id} 
+              guestId={invitado.id}
+              eventName={evento.name}
+              guestName={invitado.name}
+            />
+          </div>
+        )}
 
-                    {evento.dress_code && (
-                      <div className="flex items-start space-x-4">
-                        <div className="mt-1">
-                          <span className="text-amber-600 text-lg">👔</span>
-                        </div>
-                        <div>
-                          <p className="font-serif font-semibold text-gray-800 text-lg">Código de Vestimenta</p>
-                          <p className="text-gray-600 font-light">{formatearCodigoVestimenta(evento.dress_code)}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* QR y mensaje */}
-                <div className="space-y-8">
-                  <div className="text-center border-2 border-dashed border-gray-300 p-8">
-                    <h4 className="text-xl font-serif text-gray-800 mb-6">
-                      Código de Acceso
-                    </h4>
-                    <div className="flex justify-center mb-6">
-                      <div className="bg-white p-4 border border-gray-200 shadow-sm">
-                        {invitado.qr_code_data && (
-                          <QRCodeSVG
-                            value={invitado.qr_code_data}
-                            size={160}
-                            level="M"
-                            includeMargin={true}
-                          />
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-gray-600 mb-3 font-light italic">
-                      Presente este código al llegar al evento
-                    </p>
-                    <p className="text-xs text-gray-500 font-mono bg-gray-100 px-3 py-2 inline-block border">
-                      {invitado.invitation_code}
-                    </p>
-                  </div>
-
-                  <div className="text-center bg-amber-50 p-8 border border-amber-200">
-                    <div className="text-4xl mb-4">✨</div>
-                    <p className="text-amber-800 font-serif text-lg italic mb-3">
-                      "La elegancia es el único tipo de belleza que nunca se desvanece"
-                    </p>
-                    <p className="text-amber-700 font-light">
-                      Con sincero aprecio
-                    </p>
-                  </div>
-                </div>
+        {/* Código QR elegante */}
+        {invitado.qr_code_data && (
+          <div className="text-center">
+            <div className="bg-white rounded-lg shadow-lg p-8 border border-amber-200 inline-block">
+              <h3 className="text-xl font-serif text-amber-800 mb-4">Código de Acceso</h3>
+              <div className="flex justify-center mb-4">
+                <QRCode 
+                  value={invitado.qr_code_data} 
+                  size={150}
+                  className="border-4 border-amber-200 shadow-lg rounded-lg"
+                />
               </div>
+              <p className="text-sm text-amber-700 font-serif">
+                Código: <span className="font-mono font-bold">{invitado.invitation_code}</span>
+              </p>
+              <p className="text-xs text-amber-600 mt-2 font-serif">
+                Presenta este código QR en el evento
+              </p>
+            </div>
+          </div>
+        )}
 
-              {/* Footer elegante */}
-              <div className="mt-16 pt-8 border-t border-gray-200 text-center">
-                <p className="text-gray-500 text-sm font-light italic">
-                  Esta invitación es personal e intransferible
-                </p>
-              </div>
+        {/* Footer elegante */}
+        <div className="text-center mt-12 pt-8">
+          <div className="inline-block">
+            <div className="bg-white rounded-lg shadow-lg p-6 border border-amber-200">
+              <p className="text-amber-700 font-serif italic">
+                "La elegancia es la única belleza que nunca se desvanece"
+              </p>
+              <p className="text-amber-600 font-serif mt-2">
+                ¡Te esperamos con gran expectativa!
+              </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Decoración inferior */}
+      <div className="h-8 bg-gradient-to-r from-orange-500 to-amber-400"></div>
     </div>
   );
 };

@@ -50,7 +50,7 @@ export const InvitationPreview = ({
 
   return (
     <Dialog open={!!invitado} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-[95vw] max-h-[95vh] overflow-auto">
+      <DialogContent className="max-w-7xl w-[98vw] max-h-[98vh] overflow-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Preview de Invitación - {invitado.name}</DialogTitle>
@@ -67,9 +67,9 @@ export const InvitationPreview = ({
           </div>
         </DialogHeader>
         
-        <div className="border rounded-lg overflow-hidden bg-gray-50 w-full h-[80vh]">
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-full max-w-2xl h-full overflow-auto">
+        <div className="w-full">
+          <div className="w-full flex justify-center">
+            <div className="w-full max-w-4xl">
               <TemplateRenderer
                 templateId={templateId}
                 invitado={invitado}

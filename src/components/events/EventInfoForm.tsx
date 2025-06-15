@@ -1,12 +1,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, MapPin, Clock, Palette } from "lucide-react";
+import { CalendarDays, MapPin, Clock, Palette, Image as ImageIcon } from "lucide-react";
 import { TemplateSelector } from "../invitation-templates/TemplateSelector";
+import { ImageUploader } from "./ImageUploader";
 
 interface EventInfoFormProps {
   nombreEvento: string;
@@ -27,6 +27,8 @@ interface EventInfoFormProps {
   setCodigoVestimenta: (value: string) => void;
   templateId: string;
   setTemplateId: (value: string) => void;
+  imageUrl: string;
+  setImageUrl: (value: string) => void;
   evento?: any;
 }
 
@@ -49,6 +51,8 @@ export const EventInfoForm = ({
   setCodigoVestimenta,
   templateId,
   setTemplateId,
+  imageUrl,
+  setImageUrl,
   evento
 }: EventInfoFormProps) => {
   return (
@@ -100,6 +104,23 @@ export const EventInfoForm = ({
               rows={3}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Imagen del evento */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <ImageIcon className="w-5 h-5" />
+            <span>Imagen del Evento</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ImageUploader
+            onImageUploaded={setImageUrl}
+            currentImageUrl={imageUrl}
+            onImageRemoved={() => setImageUrl("")}
+          />
         </CardContent>
       </Card>
 
@@ -217,7 +238,8 @@ export const EventInfoForm = ({
               end_date: fechaFin,
               location: ubicacion,
               event_type: tipoEvento,
-              dress_code: codigoVestimenta
+              dress_code: codigoVestimenta,
+              image_url: imageUrl
             }}
           />
         </CardContent>

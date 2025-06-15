@@ -58,6 +58,7 @@ export type Database = {
           event_code: string
           event_type: string | null
           id: string
+          image_url: string | null
           location: string | null
           name: string
           organizer_id: string
@@ -75,6 +76,7 @@ export type Database = {
           event_code: string
           event_type?: string | null
           id?: string
+          image_url?: string | null
           location?: string | null
           name: string
           organizer_id: string
@@ -92,6 +94,7 @@ export type Database = {
           event_code?: string
           event_type?: string | null
           id?: string
+          image_url?: string | null
           location?: string | null
           name?: string
           organizer_id?: string

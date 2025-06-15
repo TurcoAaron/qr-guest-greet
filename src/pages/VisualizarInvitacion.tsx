@@ -26,6 +26,7 @@ interface Evento {
   event_type: string;
   dress_code: string;
   template_id: string;
+  image_url: string;
 }
 
 const VisualizarInvitacion = () => {
@@ -61,7 +62,8 @@ const VisualizarInvitacion = () => {
             location,
             event_type,
             dress_code,
-            template_id
+            template_id,
+            image_url
           )
         `)
         .eq('invitation_code', codigo)

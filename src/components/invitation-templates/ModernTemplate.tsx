@@ -1,9 +1,11 @@
 
-import { Calendar, Clock, MapPin, User } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { MapPin, Calendar, Clock, Palette } from "lucide-react";
+import QRCode from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
 
-interface TemplateProps {
+interface ModernTemplateProps {
   invitado: {
     id?: string;
     name: string;
@@ -24,149 +26,165 @@ interface TemplateProps {
   showRSVP?: boolean;
 }
 
-export const ModernTemplate = ({ invitado, evento, showRSVP = false }: TemplateProps) => {
+export const ModernTemplate = ({ invitado, evento, showRSVP = false }: ModernTemplateProps) => {
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es });
+    } catch {
+      return dateString;
+    }
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = new Date(dateString);
+      return format(date, "HH:mm", { locale: es });
+    } catch {
+      return "";
+    }
+  };
+
+  const getDressCodeText = (code: string) => {
+    const codes: { [key: string]: string } = {
+      'formal': 'Formal',
+      'semi-formal': 'Semi-formal',
+      'casual': 'Casual',
+      'business': 'Ejecutivo',
+      'cocktail': 'Cocktail',
+      'black-tie': 'Etiqueta',
+      'white-tie': 'Etiqueta Rigurosa',
+      'theme': 'Temático'
+    };
+    return codes[code] || code;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Header con imagen opcional */}
-          <div className="bg-white rounded-t-3xl shadow-2xl overflow-hidden">
-            {evento.image_url && (
-              <div className="h-48 bg-cover bg-center" style={{backgroundImage: `url(${evento.image_url})`}}>
-                <div className="h-full bg-black bg-opacity-40 flex items-end p-6">
-                  <h1 className="text-white text-3xl font-bold">{evento.name}</h1>
-                </div>
-              </div>
-            )}
+    <div className="bg-white min-h-screen">
+      {/* Header con imagen o degradado */}
+      <div className={`relative h-80 ${evento.image_url ? '' : 'bg-gradient-to-r from-blue-600 to-purple-600'} flex items-center justify-center`}>
+        {evento.image_url ? (
+          <>
+            <img 
+              src={evento.image_url} 
+              alt={evento.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+          </>
+        ) : null}
+        
+        <div className="relative text-center text-white px-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{evento.name}</h1>
+          {evento.description && (
+            <p className="text-xl md:text-2xl opacity-90">{evento.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Contenido principal */}
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        
+        {/* Saludo personalizado */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-semibold text-gray-800 mb-4">
+            ¡Hola, {invitado.name}!
+          </h2>
+          <p className="text-lg text-gray-600">
+            Nos complace invitarte a este evento especial
+          </p>
+        </div>
+
+        {/* Detalles del evento */}
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
+          
+          {/* Información de fecha y hora */}
+          <div className="bg-gray-50 rounded-xl p-6">
+            <div className="flex items-center mb-4">
+              <Calendar className="w-6 h-6 text-blue-600 mr-3" />
+              <h3 className="text-xl font-semibold text-gray-800">Fecha y Hora</h3>
+            </div>
             
-            {!evento.image_url && (
-              <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
-                <h1 className="text-white text-3xl font-bold text-center">{evento.name}</h1>
+            <div className="space-y-3">
+              <div>
+                <p className="font-medium text-gray-700">Fecha:</p>
+                <p className="text-gray-600 capitalize">{formatDate(evento.start_date)}</p>
               </div>
-            )}
-          </div>
-
-          {/* Contenido principal */}
-          <div className="bg-white shadow-2xl px-8 py-6">
-            {/* Saludo personalizado */}
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center mb-4">
-                <User className="w-6 h-6 text-blue-600 mr-2" />
-                <span className="text-lg text-gray-600">Estimado/a</span>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800">{invitado.name}</h2>
-              <p className="text-gray-600 mt-2">Te invitamos cordialmente a nuestro evento</p>
-            </div>
-
-            {/* Descripción */}
-            {evento.description && (
-              <div className="text-center mb-8 p-4 bg-gray-50 rounded-lg">
-                <p className="text-gray-700 leading-relaxed">{evento.description}</p>
-              </div>
-            )}
-
-            {/* Detalles del evento */}
-            <div className="space-y-6 mb-8">
-              <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
-                <Calendar className="w-8 h-8 text-blue-600 flex-shrink-0" />
+              
+              <div className="flex items-center space-x-4">
                 <div>
-                  <h3 className="font-semibold text-gray-800">Fecha</h3>
-                  <p className="text-gray-600">{formatDate(evento.start_date)}</p>
+                  <p className="font-medium text-gray-700">Hora de inicio:</p>
+                  <p className="text-gray-600">{formatTime(evento.start_date)}</p>
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-4 p-4 bg-indigo-50 rounded-lg">
-                <Clock className="w-8 h-8 text-indigo-600 flex-shrink-0" />
-                <div>
-                  <h3 className="font-semibold text-gray-800">Hora</h3>
-                  <p className="text-gray-600">
-                    {formatTime(evento.start_date)}
-                    {evento.end_date && ` - ${formatTime(evento.end_date)}`}
-                  </p>
-                </div>
-              </div>
-
-              {evento.location && (
-                <div className="flex items-center space-x-4 p-4 bg-purple-50 rounded-lg">
-                  <MapPin className="w-8 h-8 text-purple-600 flex-shrink-0" />
+                {evento.end_date && (
                   <div>
-                    <h3 className="font-semibold text-gray-800">Ubicación</h3>
-                    <p className="text-gray-600">{evento.location}</p>
+                    <p className="font-medium text-gray-700">Hora de fin:</p>
+                    <p className="text-gray-600">{formatTime(evento.end_date)}</p>
                   </div>
-                </div>
-              )}
-
-              {evento.dress_code && (
-                <div className="flex items-center space-x-4 p-4 bg-pink-50 rounded-lg">
-                  <span className="text-2xl flex-shrink-0">👔</span>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Código de Vestimenta</h3>
-                    <p className="text-gray-600">{evento.dress_code}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Sección RSVP */}
-            {showRSVP && invitado.id && evento.id && (
-              <div className="mb-8">
-                <RSVPSection 
-                  guestId={invitado.id} 
-                  eventId={evento.id}
-                  guestName={invitado.name}
-                />
-              </div>
-            )}
-
-            {/* Código QR */}
-            {invitado.qr_code_data && (
-              <div className="text-center mb-8 p-6 bg-gray-50 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Tu Código de Acceso
-                </h3>
-                <div className="flex justify-center mb-4">
-                  <div className="bg-white p-4 rounded-lg shadow-md">
-                    <QRCodeSVG
-                      value={invitado.qr_code_data}
-                      size={150}
-                      level="M"
-                      includeMargin={true}
-                    />
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 mb-2">
-                  Presenta este código QR al llegar al evento
-                </p>
-                {invitado.invitation_code && (
-                  <p className="text-xs text-gray-500 font-mono">
-                    Código: {invitado.invitation_code}
-                  </p>
                 )}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Footer */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-6 rounded-b-3xl">
-            <p className="text-lg font-medium">¡Esperamos verte pronto!</p>
-            <p className="text-sm opacity-90 mt-1">Confirma tu asistencia para reservar tu lugar</p>
+          {/* Información de ubicación */}
+          <div className="bg-gray-50 rounded-xl p-6">
+            <div className="flex items-center mb-4">
+              <MapPin className="w-6 h-6 text-green-600 mr-3" />
+              <h3 className="text-xl font-semibold text-gray-800">Ubicación</h3>
+            </div>
+            
+            <p className="text-gray-600">
+              {evento.location || "Por confirmar"}
+            </p>
           </div>
+        </div>
+
+        {/* Código de vestimenta */}
+        {evento.dress_code && (
+          <div className="bg-purple-50 rounded-xl p-6 mb-12">
+            <div className="flex items-center mb-3">
+              <Palette className="w-6 h-6 text-purple-600 mr-3" />
+              <h3 className="text-xl font-semibold text-gray-800">Código de Vestimenta</h3>
+            </div>
+            <p className="text-gray-700 font-medium">{getDressCodeText(evento.dress_code)}</p>
+          </div>
+        )}
+
+        {/* Sección RSVP */}
+        {showRSVP && evento.id && invitado.id && (
+          <RSVPSection 
+            eventId={evento.id} 
+            guestId={invitado.id}
+            eventName={evento.name}
+            guestName={invitado.name}
+          />
+        )}
+
+        {/* Código QR */}
+        {invitado.qr_code_data && (
+          <div className="text-center bg-gray-50 rounded-xl p-8">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Código de Acceso</h3>
+            <div className="flex justify-center mb-4">
+              <QRCode 
+                value={invitado.qr_code_data} 
+                size={150}
+                className="border-4 border-white shadow-lg rounded-lg"
+              />
+            </div>
+            <p className="text-sm text-gray-600">
+              Código: <span className="font-mono font-bold">{invitado.invitation_code}</span>
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Presenta este código QR en el evento
+            </p>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="text-center mt-12 pt-8 border-t border-gray-200">
+          <p className="text-gray-600">
+            ¡Esperamos verte pronto!
+          </p>
         </div>
       </div>
     </div>
