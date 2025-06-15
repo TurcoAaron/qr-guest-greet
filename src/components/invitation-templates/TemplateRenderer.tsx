@@ -1,5 +1,6 @@
 
-import { Suspense, lazy, ErrorBoundary } from "react";
+import { Suspense } from "react";
+import { TemplateErrorBoundary } from "./TemplateErrorBoundary";
 
 // Importaciones estáticas para evitar problemas en build
 import { ModernTemplate } from "./ModernTemplate";
@@ -107,7 +108,7 @@ export const TemplateRenderer = ({
   const finalDefaultPets = invitado.pets_count || defaultPets;
 
   return (
-    <ErrorBoundary
+    <TemplateErrorBoundary
       fallback={
         <TemplateErrorFallback 
           templateId={validTemplateId} 
@@ -127,6 +128,6 @@ export const TemplateRenderer = ({
           defaultPets={finalDefaultPets}
         />
       </Suspense>
-    </ErrorBoundary>
+    </TemplateErrorBoundary>
   );
 };
