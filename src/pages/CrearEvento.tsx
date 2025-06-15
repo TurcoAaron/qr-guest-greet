@@ -32,6 +32,7 @@ const CrearEvento = () => {
   const [ubicacion, setUbicacion] = useState("");
   const [tipoEvento, setTipoEvento] = useState("");
   const [codigoVestimenta, setCodigoVestimenta] = useState("");
+  const [codigoEvento, setCodigoEvento] = useState("");
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([
@@ -54,9 +55,19 @@ const CrearEvento = () => {
     setInvitados(nuevosInvitados);
   };
 
-  const generarCodigoEvento = () => {
-    // Mantener "EVT" como prefijo, seguido de 6 dígitos del timestamp para facilidad.
-    return `EVT${Date.now().toString().slice(-6)}`;
+  const validarCodigoUnico = async (codigo: string) => {
+    const { data, error } = await supabase
+      .from('events')
+      .select('id')
+      .eq('event_code', codigo)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error validando código:', error);
+      return false;
+    }
+
+    return !data; // Retorna true si no existe (es único)
   };
 
   const crearEvento = async () => {
@@ -65,6 +76,26 @@ const CrearEvento = () => {
       toast({
         title: "Error",
         description: "El nombre del evento es requerido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!codigoEvento.trim()) {
+      toast({
+        title: "Error",
+        description: "El código del evento es requerido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar formato del código (solo letras, números y guiones)
+    const codigoLimpio = codigoEvento.trim().toUpperCase();
+    if (!/^[A-Z0-9-]+$/.test(codigoLimpio)) {
+      toast({
+        title: "Error",
+        description: "El código solo puede contener letras, números y guiones",
         variant: "destructive",
       });
       return;
@@ -110,8 +141,19 @@ const CrearEvento = () => {
     setLoading(true);
 
     try {
-      // 1. Generar código de evento y crear el evento
-      const codigoEvento = generarCodigoEvento();
+      // Verificar que el código sea único
+      const esUnico = await validarCodigoUnico(codigoLimpio);
+      if (!esUnico) {
+        toast({
+          title: "Error",
+          description: "Este código de evento ya existe. Por favor usa otro código",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // 1. Crear el evento con el código personalizado
       const { data: evento, error: errorEvento } = await supabase
         .from('events')
         .insert({
@@ -122,7 +164,7 @@ const CrearEvento = () => {
           end_date: fechaFin || null,
           location: ubicacion.trim() || null,
           organizer_id: user.id,
-          event_code: codigoEvento,
+          event_code: codigoLimpio,
           status: 'upcoming',
           event_type: tipoEvento.trim() || null,
           dress_code: codigoVestimenta.trim() || null
@@ -133,11 +175,10 @@ const CrearEvento = () => {
       if (errorEvento) throw errorEvento;
 
       // 2. Crear invitados con código INV-{codigoEvento}-{NN}
-      const invitadosValidos = invitados.filter(inv => inv.name.trim());
       const invitadosParaCrear = invitadosValidos.map((invitado, index) => {
         // Código personalizado de invitación:
         const numeracion = (index + 1).toString().padStart(2, '0');
-        const codigoInvitacion = `INV-${codigoEvento}-${numeracion}`;
+        const codigoInvitacion = `INV-${codigoLimpio}-${numeracion}`;
         const qrData = JSON.stringify({
           event_id: evento.id,
           event_name: nombreEvento,
@@ -163,7 +204,7 @@ const CrearEvento = () => {
 
       toast({
         title: "¡Evento Creado!",
-        description: `Se creó el evento "${nombreEvento}" con ${invitadosValidos.length} invitados`,
+        description: `Se creó el evento "${nombreEvento}" con código "${codigoLimpio}" y ${invitadosValidos.length} invitados`,
       });
 
       navigate('/dashboard');
@@ -228,6 +269,23 @@ const CrearEvento = () => {
                 </div>
                 
                 <div>
+                  <Label htmlFor="codigoEvento">Código del Evento *</Label>
+                  <Input
+                    id="codigoEvento"
+                    type="text"
+                    placeholder="ej: BODA2024, CONF-TECH, CUMPLE-JUAN"
+                    value={codigoEvento}
+                    onChange={(e) => setCodigoEvento(e.target.value.toUpperCase())}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Solo letras, números y guiones. Debe ser único.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
                   <Label htmlFor="tipo">Tipo de Evento</Label>
                   <Select value={tipoEvento} onValueChange={setTipoEvento}>
                     <SelectTrigger className="mt-2">
@@ -242,6 +300,25 @@ const CrearEvento = () => {
                       <SelectItem value="workshop">Taller</SelectItem>
                       <SelectItem value="seminar">Seminario</SelectItem>
                       <SelectItem value="other">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
+                  <Select value={codigoVestimenta} onValueChange={setCodigoVestimenta}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Selecciona el código de vestimenta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="formal">Formal</SelectItem>
+                      <SelectItem value="semi-formal">Semi-formal</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                      <SelectItem value="business">Ejecutivo</SelectItem>
+                      <SelectItem value="cocktail">Cocktail</SelectItem>
+                      <SelectItem value="black-tie">Etiqueta</SelectItem>
+                      <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
+                      <SelectItem value="theme">Temático</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -271,37 +348,16 @@ const CrearEvento = () => {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="ubicacion">Ubicación</Label>
-                  <Input
-                    id="ubicacion"
-                    type="text"
-                    placeholder="Lugar donde se realizará el evento"
-                    value={ubicacion}
-                    onChange={(e) => setUbicacion(e.target.value)}
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
-                  <Select value={codigoVestimenta} onValueChange={setCodigoVestimenta}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Selecciona el código de vestimenta" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="formal">Formal</SelectItem>
-                      <SelectItem value="semi-formal">Semi-formal</SelectItem>
-                      <SelectItem value="casual">Casual</SelectItem>
-                      <SelectItem value="business">Ejecutivo</SelectItem>
-                      <SelectItem value="cocktail">Cocktail</SelectItem>
-                      <SelectItem value="black-tie">Etiqueta</SelectItem>
-                      <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
-                      <SelectItem value="theme">Temático</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="ubicacion">Ubicación</Label>
+                <Input
+                  id="ubicacion"
+                  type="text"
+                  placeholder="Lugar donde se realizará el evento"
+                  value={ubicacion}
+                  onChange={(e) => setUbicacion(e.target.value)}
+                  className="mt-2"
+                />
               </div>
 
               <div>
@@ -396,7 +452,7 @@ const CrearEvento = () => {
                 </Button>
                 <Button
                   onClick={crearEvento}
-                  disabled={loading || !nombreEvento.trim() || !fechaInicio}
+                  disabled={loading || !nombreEvento.trim() || !codigoEvento.trim() || !fechaInicio}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   {loading ? (
