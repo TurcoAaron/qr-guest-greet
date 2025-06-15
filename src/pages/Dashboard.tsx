@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { LogOut, Plus, Calendar, Users, MapPin } from 'lucide-react';
+import { LogOut, Plus, Calendar, Users, MapPin, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Event {
@@ -82,7 +81,17 @@ const Dashboard = () => {
             <CardTitle className="text-lg">{event.name}</CardTitle>
             <CardDescription className="mt-1">{event.description}</CardDescription>
           </div>
-          {getStatusBadge(event.status)}
+          <div className="flex items-center space-x-2">
+            {getStatusBadge(event.status)}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(`/editar-evento/${event.id}`)}
+              className="h-8 w-8 p-0"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

@@ -15,6 +15,7 @@ import GenerarQR from "./pages/GenerarQR";
 import EscanearQR from "./pages/EscanearQR";
 import Administrar from "./pages/Administrar";
 import CrearEvento from "./pages/CrearEvento";
+import EditarEvento from "./pages/EditarEvento";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CrearEvento />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/editar-evento/:eventoId" 
+              element={
+                <ProtectedRoute>
+                  <EditarEvento />
                 </ProtectedRoute>
               } 
             />
