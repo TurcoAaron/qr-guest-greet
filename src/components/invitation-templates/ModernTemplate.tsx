@@ -1,9 +1,9 @@
-
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar, MapPin, Clock, Shirt } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { MapPin, Calendar, Clock, Palette } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
+import QRCode from "qrcode.react";
 
 interface ModernTemplateProps {
   invitado: {
@@ -24,9 +24,19 @@ interface ModernTemplateProps {
     image_url?: string;
   };
   showRSVP?: boolean;
+  maxPasses?: number;
+  defaultAdults?: number;
+  defaultChildren?: number;
 }
 
-export const ModernTemplate = ({ invitado, evento, showRSVP = false }: ModernTemplateProps) => {
+export const ModernTemplate = ({ 
+  invitado, 
+  evento, 
+  showRSVP = false,
+  maxPasses,
+  defaultAdults,
+  defaultChildren
+}: ModernTemplateProps) => {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -60,7 +70,7 @@ export const ModernTemplate = ({ invitado, evento, showRSVP = false }: ModernTem
   };
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 p-4">
       {/* Header con imagen o degradado */}
       <div className={`relative h-80 ${evento.image_url ? '' : 'bg-gradient-to-r from-blue-600 to-purple-600'} flex items-center justify-center`}>
         {evento.image_url ? (
@@ -151,12 +161,17 @@ export const ModernTemplate = ({ invitado, evento, showRSVP = false }: ModernTem
         )}
 
         {/* Sección RSVP */}
-        {showRSVP && evento.id && invitado.id && (
-          <RSVPSection 
-            eventId={evento.id} 
-            guestId={invitado.id}
-            guestName={invitado.name}
-          />
+        {showRSVP && invitado.id && evento.id && (
+          <div className="mt-8">
+            <RSVPSection
+              guestId={invitado.id}
+              eventId={evento.id}
+              guestName={invitado.name}
+              maxPasses={maxPasses}
+              defaultAdults={defaultAdults}
+              defaultChildren={defaultChildren}
+            />
+          </div>
         )}
 
         {/* Código QR */}
@@ -164,7 +179,7 @@ export const ModernTemplate = ({ invitado, evento, showRSVP = false }: ModernTem
           <div className="text-center bg-gray-50 rounded-xl p-8">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Código de Acceso</h3>
             <div className="flex justify-center mb-4">
-              <QRCodeSVG 
+              <QRCode 
                 value={invitado.qr_code_data} 
                 size={150}
                 className="border-4 border-white shadow-lg rounded-lg"

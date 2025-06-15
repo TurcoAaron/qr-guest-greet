@@ -81,7 +81,13 @@ export const GuestManagement = ({
 
   const actualizarInvitado = (index: number, field: keyof Invitado, value: string | number) => {
     const nuevosInvitados = [...invitados];
-    nuevosInvitados[index][field] = value as any;
+    
+    // Type-safe assignment
+    if (field === 'name' || field === 'email' || field === 'phone') {
+      (nuevosInvitados[index] as any)[field] = value as string;
+    } else if (field === 'passes_count' || field === 'adults_count' || field === 'children_count') {
+      (nuevosInvitados[index] as any)[field] = value as number;
+    }
     
     // Si se actualiza adults_count o children_count, actualizar passes_count automáticamente
     if (field === 'adults_count' || field === 'children_count') {

@@ -25,9 +25,20 @@ interface TemplateRendererProps {
     image_url?: string;
   };
   showRSVP?: boolean;
+  maxPasses?: number;
+  defaultAdults?: number;
+  defaultChildren?: number;
 }
 
-export const TemplateRenderer = ({ templateId, invitado, evento, showRSVP = false }: TemplateRendererProps) => {
+export const TemplateRenderer = ({ 
+  templateId, 
+  invitado, 
+  evento, 
+  showRSVP = false,
+  maxPasses,
+  defaultAdults,
+  defaultChildren
+}: TemplateRendererProps) => {
   const templates = {
     modern: ModernTemplate,
     elegant: ElegantTemplate,
@@ -38,5 +49,14 @@ export const TemplateRenderer = ({ templateId, invitado, evento, showRSVP = fals
 
   const TemplateComponent = templates[templateId as keyof typeof templates] || ModernTemplate;
 
-  return <TemplateComponent invitado={invitado} evento={evento} showRSVP={showRSVP} />;
+  return (
+    <TemplateComponent 
+      invitado={invitado} 
+      evento={evento} 
+      showRSVP={showRSVP}
+      maxPasses={maxPasses}
+      defaultAdults={defaultAdults}
+      defaultChildren={defaultChildren}
+    />
+  );
 };
