@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,7 @@ const Index = () => {
     }
 
     try {
+      // Buscar por ID del evento
       const { data: evento, error } = await supabase
         .from('events')
         .select('*')
@@ -77,12 +77,8 @@ const Index = () => {
         return;
       }
 
-      navigate('/invitacion', { 
-        state: { 
-          guest: invitado,
-          event: invitado.events 
-        } 
-      });
+      // Navegar con el ID del invitado como parámetro de ruta
+      navigate(`/invitacion/${invitado.id}`);
     } catch (error) {
       toast({
         title: "Error",

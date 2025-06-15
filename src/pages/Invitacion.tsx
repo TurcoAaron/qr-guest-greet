@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, Download, ArrowLeft, XCircle, Check, X } from "lucide-react";
@@ -35,7 +34,7 @@ interface RsvpResponse {
 }
 
 const Invitacion = () => {
-  const [searchParams] = useSearchParams();
+  const { guestId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [invitado, setInvitado] = useState<Invitado | null>(null);
@@ -45,17 +44,16 @@ const Invitacion = () => {
   const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
   useEffect(() => {
-    const codigo = searchParams.get("codigo");
-    if (codigo) {
-      cargarInvitacion(codigo);
+    if (guestId) {
+      cargarInvitacion(guestId);
     } else {
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [guestId]);
 
-  const cargarInvitacion = async (codigo: string) => {
+  const cargarInvitacion = async (id: string) => {
     try {
-      // Cargar información del invitado
+      // Cargar información del invitado por ID
       const { data: invitadoData, error: invitadoError } = await supabase
         .from('guests')
         .select(`
@@ -72,7 +70,7 @@ const Invitacion = () => {
             dress_code
           )
         `)
-        .eq('invitation_code', codigo)
+        .eq('id', id)
         .single();
 
       if (invitadoError || !invitadoData) {
@@ -220,7 +218,7 @@ const Invitacion = () => {
                 <XCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
                 <h2 className="text-xl font-bold mb-2">Invitación no encontrada</h2>
                 <p className="text-gray-600 mb-6">
-                  No se pudo encontrar la invitación. Verifica que el código sea correcto.
+                  No se pudo encontrar la invitación. Verifica que el enlace sea correcto.
                 </p>
                 <Button onClick={() => navigate('/')}>
                   <ArrowLeft className="w-4 h-4 mr-2" />

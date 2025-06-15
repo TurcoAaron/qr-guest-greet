@@ -39,7 +39,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route path="/invitacion" element={<Layout><Invitacion /></Layout>} />
+            <Route path="/invitacion/:guestId" element={<Layout><Invitacion /></Layout>} />
             <Route path="/tomar-asistencia/:eventoId" element={<Layout><TomarAsistencia /></Layout>} />
             <Route 
               path="/crear-evento" 
