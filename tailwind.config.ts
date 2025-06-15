@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -7,6 +8,8 @@ export default {
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
+		// Asegurar que las templates estén incluidas
+		"./src/components/invitation-templates/**/*.{ts,tsx}",
 	],
 	prefix: "",
 	theme: {
@@ -93,4 +96,25 @@ export default {
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
+	// Safelist para asegurar que las clases críticas no se eliminen en build
+	safelist: [
+		'bg-gradient-to-br',
+		'from-purple-50',
+		'via-pink-50', 
+		'to-orange-50',
+		'from-amber-50',
+		'to-orange-100',
+		'from-slate-800',
+		'to-blue-900',
+		'bg-gray-50',
+		'animate-spin',
+		'grayscale',
+		// Clases comunes de las templates
+		{
+			pattern: /(bg|text|border)-(purple|pink|orange|amber|blue|gray|green|red|slate)-(50|100|200|300|400|500|600|700|800|900)/,
+		},
+		{
+			pattern: /animate-(spin|pulse|bounce)/,
+		}
+	]
 } satisfies Config;
