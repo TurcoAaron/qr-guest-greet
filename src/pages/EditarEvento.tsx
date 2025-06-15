@@ -153,7 +153,10 @@ const EditarEvento = () => {
   };
 
   const generarCodigoInvitacion = (index: number) => {
-    return `INV${Date.now().toString().slice(-6)}${(index + 1).toString().padStart(2, '0')}`;
+    if (!evento?.event_code) return `INV${Date.now().toString().slice(-6)}${(index + 1).toString().padStart(2, '0')}`;
+    
+    const numeracion = (index + 1).toString().padStart(2, '0');
+    return `INV-${evento.event_code}-${numeracion}`;
   };
 
   const guardarCambios = async () => {
@@ -195,14 +198,14 @@ const EditarEvento = () => {
         .from('events')
         .update({
           name: nombreEvento.trim(),
-          description: descripcion.trim() || null,
+          description: descripcion?.trim() || null,
           date: fechaInicio,
           start_date: fechaInicio,
           end_date: fechaFin || null,
-          location: ubicacion.trim() || null,
+          location: ubicacion?.trim() || null,
           status: status,
-          event_type: tipoEvento.trim() || null,
-          dress_code: codigoVestimenta.trim() || null
+          event_type: tipoEvento?.trim() || null,
+          dress_code: codigoVestimenta?.trim() || null
         })
         .eq('id', eventoId);
 
@@ -216,8 +219,8 @@ const EditarEvento = () => {
             .from('guests')
             .update({
               name: invitado.name.trim(),
-              email: invitado.email.trim() || null,
-              phone: invitado.phone.trim() || null
+              email: invitado.email?.trim() || null,
+              phone: invitado.phone?.trim() || null
             })
             .eq('id', invitado.id);
 
@@ -237,8 +240,8 @@ const EditarEvento = () => {
             .insert({
               event_id: eventoId,
               name: invitado.name.trim(),
-              email: invitado.email.trim() || null,
-              phone: invitado.phone.trim() || null,
+              email: invitado.email?.trim() || null,
+              phone: invitado.phone?.trim() || null,
               invitation_code: codigoInvitacion,
               qr_code_data: qrData
             });
