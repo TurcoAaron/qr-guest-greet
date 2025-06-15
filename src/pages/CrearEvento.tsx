@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2, Image as ImageIcon, Shield, Hash } from "lucide-react";
+import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2, Image as ImageIcon, Shield, Hash, BarChart3 } from "lucide-react";
 import { TemplateSelector } from "@/components/invitation-templates/TemplateSelector";
 import { ImageUploader } from "@/components/events/ImageUploader";
 import type { EventImage } from "@/types/event";
@@ -306,22 +306,22 @@ const CrearEvento = () => {
               </CardContent>
             </Card>
 
-            {/* Configuración de Seguridad */}
+            {/* Configuración de Análisis */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5" />
-                  <span>Configuración de Seguridad</span>
+                  <BarChart3 className="w-5 h-5" />
+                  <span>Configuración de Análisis</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="validateFullAttendance" className="text-base">
-                      Validar Asistencia Completa
+                      Registro Detallado de Asistencia
                     </Label>
                     <div className="text-sm text-muted-foreground">
-                      Requiere que todos los invitados del grupo estén presentes para permitir el acceso
+                      Recopila datos completos de asistencia para comparar confirmaciones vs. asistencia real
                     </div>
                   </div>
                   <Switch

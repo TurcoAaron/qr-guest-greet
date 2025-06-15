@@ -1,41 +1,41 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CalendarDays, MapPin, Clock, Palette, Image as ImageIcon, Shield, Hash } from "lucide-react";
-import { TemplateSelector } from "../invitation-templates/TemplateSelector";
-import { ImageUploader } from "./ImageUploader";
+import { CalendarDays, Clock, MapPin, Palette, ImageIcon, BarChart3, Hash } from "lucide-react";
+import { TemplateSelector } from "@/components/invitation-templates/TemplateSelector";
+import { ImageUploader } from "@/components/events/ImageUploader";
 import type { EventImage } from "@/types/event";
 
 interface EventInfoFormProps {
   nombreEvento: string;
-  setNombreEvento: (value: string) => void;
+  setNombreEvento: (nombreEvento: string) => void;
   descripcion: string;
-  setDescripcion: (value: string) => void;
+  setDescripcion: (descripcion: string) => void;
   fechaInicio: string;
-  setFechaInicio: (value: string) => void;
+  setFechaInicio: (fechaInicio: string) => void;
   fechaFin: string;
-  setFechaFin: (value: string) => void;
+  setFechaFin: (fechaFin: string) => void;
   ubicacion: string;
-  setUbicacion: (value: string) => void;
+  setUbicacion: (ubicacion: string) => void;
   status: string;
-  setStatus: (value: string) => void;
+  setStatus: (status: string) => void;
   tipoEvento: string;
-  setTipoEvento: (value: string) => void;
+  setTipoEvento: (tipoEvento: string) => void;
   codigoVestimenta: string;
-  setCodigoVestimenta: (value: string) => void;
+  setCodigoVestimenta: (codigoVestimenta: string) => void;
   templateId: string;
-  setTemplateId: (value: string) => void;
+  setTemplateId: (templateId: string) => void;
   images: EventImage[];
-  setImages: (value: EventImage[]) => void;
+  setImages: (images: EventImage[]) => void;
   validateFullAttendance: boolean;
-  setValidateFullAttendance: (value: boolean) => void;
-  codigoEvento?: string;
-  setCodigoEvento?: (value: string) => void;
-  evento?: any;
+  setValidateFullAttendance: (validateFullAttendance: boolean) => void;
+  codigoEvento: string;
+  setCodigoEvento: (codigoEvento: string) => void;
+  evento: any;
   loading: boolean;
 }
 
@@ -68,9 +68,9 @@ export const EventInfoForm = ({
   loading
 }: EventInfoFormProps) => {
   return (
-    <div className="space-y-8">
+    <>
       {/* Información básica */}
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <CalendarDays className="w-5 h-5" />
@@ -91,16 +91,20 @@ export const EventInfoForm = ({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="status">Estado</Label>
-              <Select value={status} onValueChange={setStatus}>
+              <Label htmlFor="tipoEvento">Tipo de Evento</Label>
+              <Select value={tipoEvento} onValueChange={setTipoEvento}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el estado" />
+                  <SelectValue placeholder="Selecciona el tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="upcoming">Próximo</SelectItem>
-                  <SelectItem value="active">Activo</SelectItem>
-                  <SelectItem value="completed">Completado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                  <SelectItem value="wedding">Boda</SelectItem>
+                  <SelectItem value="birthday">Cumpleaños</SelectItem>
+                  <SelectItem value="conference">Conferencia</SelectItem>
+                  <SelectItem value="corporate">Corporativo</SelectItem>
+                  <SelectItem value="social">Social</SelectItem>
+                  <SelectItem value="workshop">Taller</SelectItem>
+                  <SelectItem value="seminar">Seminario</SelectItem>
+                  <SelectItem value="other">Otro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -118,44 +122,42 @@ export const EventInfoForm = ({
           </div>
 
           {/* Código del evento personalizable */}
-          {setCodigoEvento && (
-            <div className="space-y-2">
-              <Label htmlFor="codigoEvento" className="flex items-center space-x-2">
-                <Hash className="w-4 h-4" />
-                <span>Código del Evento</span>
-              </Label>
-              <Input
-                id="codigoEvento"
-                type="text"
-                placeholder="Ej: BODA2024-MJ"
-                value={codigoEvento}
-                onChange={(e) => setCodigoEvento(e.target.value)}
-                className="font-mono"
-              />
-              <p className="text-xs text-gray-500">
-                Este código se usará para identificar el evento de forma única. Si lo cambias, se actualizarán automáticamente todos los códigos de invitación.
-              </p>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="codigoEvento" className="flex items-center space-x-2">
+              <Hash className="w-4 h-4" />
+              <span>Código del Evento</span>
+            </Label>
+            <Input
+              id="codigoEvento"
+              type="text"
+              placeholder="Ej: BODA2024-MJ (opcional - se generará automáticamente si se deja vacío)"
+              value={codigoEvento}
+              onChange={(e) => setCodigoEvento(e.target.value)}
+              className="font-mono"
+            />
+            <p className="text-xs text-gray-500">
+              Código único para identificar el evento. Si no lo especificas, se generará uno automáticamente.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Configuración de Seguridad */}
-      <Card>
+      {/* Configuración de Análisis */}
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Shield className="w-5 h-5" />
-            <span>Configuración de Seguridad</span>
+            <BarChart3 className="w-5 h-5" />
+            <span>Configuración de Análisis</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="validateFullAttendance" className="text-base">
-                Validar Asistencia Completa
+                Registro Detallado de Asistencia
               </Label>
               <div className="text-sm text-muted-foreground">
-                Requiere que todos los invitados del grupo estén presentes para permitir el acceso. Útil para comparar confirmaciones vs asistencia real.
+                Recopila datos completos de asistencia para comparar confirmaciones vs. asistencia real
               </div>
             </div>
             <Switch
@@ -167,8 +169,8 @@ export const EventInfoForm = ({
         </CardContent>
       </Card>
 
-      {/* Imagenes del evento */}
-      <Card>
+      {/* Imagen del evento */}
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <ImageIcon className="w-5 h-5" />
@@ -185,7 +187,7 @@ export const EventInfoForm = ({
       </Card>
 
       {/* Fecha y ubicación */}
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Clock className="w-5 h-5" />
@@ -215,47 +217,20 @@ export const EventInfoForm = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ubicacion">Ubicación</Label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                id="ubicacion"
-                type="text"
-                placeholder="Ej: Salón de Eventos Plaza Mayor"
-                value={ubicacion}
-                onChange={(e) => setUbicacion(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Detalles del evento */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Detalles Adicionales</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="tipoEvento">Tipo de Evento</Label>
-              <Select value={tipoEvento} onValueChange={setTipoEvento}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="wedding">Boda</SelectItem>
-                  <SelectItem value="birthday">Cumpleaños</SelectItem>
-                  <SelectItem value="conference">Conferencia</SelectItem>
-                  <SelectItem value="corporate">Corporativo</SelectItem>
-                  <SelectItem value="social">Social</SelectItem>
-                  <SelectItem value="workshop">Taller</SelectItem>
-                  <SelectItem value="seminar">Seminario</SelectItem>
-                  <SelectItem value="other">Otro</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="ubicacion">Ubicación</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="ubicacion"
+                  type="text"
+                  placeholder="Ej: Salón de Eventos Plaza Mayor"
+                  value={ubicacion}
+                  onChange={(e) => setUbicacion(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
@@ -280,7 +255,7 @@ export const EventInfoForm = ({
       </Card>
 
       {/* Selector de Template */}
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Palette className="w-5 h-5" />
@@ -304,6 +279,6 @@ export const EventInfoForm = ({
           />
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
