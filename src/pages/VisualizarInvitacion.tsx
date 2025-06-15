@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { XCircle, ArrowLeft } from "lucide-react";
@@ -82,6 +81,8 @@ const VisualizarInvitacion = () => {
         return;
       }
 
+      console.log('Datos del invitado cargados:', invitadoData);
+
       // Convertir la respuesta de la base de datos al tipo Invitado esperado
       const invitadoTyped: Invitado = {
         id: invitadoData.id,
@@ -93,7 +94,7 @@ const VisualizarInvitacion = () => {
         passes_count: invitadoData.passes_count,
         adults_count: invitadoData.adults_count,
         children_count: invitadoData.children_count,
-        pets_count: 0 // Agregar valor por defecto para pets_count
+        pets_count: invitadoData.pets_count || 0 // Asegurar que pets_count tenga un valor válido
       };
 
       setInvitado(invitadoTyped);
