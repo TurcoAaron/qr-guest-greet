@@ -133,7 +133,7 @@ export const EventInfoForm = ({
                 className="font-mono"
               />
               <p className="text-xs text-gray-500">
-                Este código se usará para identificar el evento de forma única
+                Este código se usará para identificar el evento de forma única. Si lo cambias, se actualizarán automáticamente todos los códigos de invitación.
               </p>
             </div>
           )}
@@ -155,7 +155,7 @@ export const EventInfoForm = ({
                 Validar Asistencia Completa
               </Label>
               <div className="text-sm text-muted-foreground">
-                Requiere que todos los invitados del grupo estén presentes para permitir el acceso
+                Requiere que todos los invitados del grupo estén presentes para permitir el acceso. Útil para comparar confirmaciones vs asistencia real.
               </div>
             </div>
             <Switch

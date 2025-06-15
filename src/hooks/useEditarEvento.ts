@@ -40,6 +40,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
   const [invitados, setInvitados] = useState<Invitado[]>([]);
   const [validateFullAttendance, setValidateFullAttendance] = useState(false);
   const [codigoEvento, setCodigoEvento] = useState("");
+  const [codigoEventoOriginal, setCodigoEventoOriginal] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
         setTemplateId(eventoData.template_id || "modern");
         setValidateFullAttendance(eventoData.validate_full_attendance || false);
         setCodigoEvento(eventoData.event_code || "");
+        setCodigoEventoOriginal(eventoData.event_code || "");
       }
 
       // Cargar imágenes del evento
@@ -130,6 +132,59 @@ export const useEditarEvento = (eventoId: string | undefined) => {
     }
   };
 
+  const generarCodigoInvitacion = (index: number, codigoEvento: string, nombreInvitado: string) => {
+    const numeracion = (index + 1).toString().padStart(2, '0');
+    const nombreLimpio = nombreInvitado.replace(/\s+/g, '').substring(0, 3).toUpperCase();
+    return `INV-${codigoEvento}-${nombreLimpio}-${numeracion}`;
+  };
+
+  const actualizarCodigosInvitacion = async (nuevoCodigoEvento: string) => {
+    if (!eventoId || nuevoCodigoEvento === codigoEventoOriginal) return;
+
+    try {
+      console.log('Actualizando códigos de invitación para evento:', eventoId);
+      
+      for (const [index, invitado] of invitados.entries()) {
+        if (invitado.id && invitado.name.trim()) {
+          const nuevoCodigoInvitacion = generarCodigoInvitacion(index, nuevoCodigoEvento, invitado.name);
+          const nuevoQrData = JSON.stringify({
+            event_id: eventoId,
+            event_name: nombreEvento,
+            guest_name: invitado.name,
+            invitation_code: nuevoCodigoInvitacion
+          });
+
+          const { error } = await supabase
+            .from('guests')
+            .update({
+              invitation_code: nuevoCodigoInvitacion,
+              qr_code_data: nuevoQrData
+            })
+            .eq('id', invitado.id);
+
+          if (error) {
+            console.error('Error actualizando invitado:', invitado.id, error);
+            throw error;
+          }
+        }
+      }
+
+      toast({
+        title: "Códigos actualizados",
+        description: "Se actualizaron todos los códigos de invitación con el nuevo código del evento",
+      });
+
+    } catch (error) {
+      console.error('Error actualizando códigos de invitación:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron actualizar los códigos de invitación",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const guardarCambios = async () => {
     if (!eventoId) return;
 
@@ -156,6 +211,12 @@ export const useEditarEvento = (eventoId: string | undefined) => {
 
       if (eventoError) throw eventoError;
 
+      // Si el código del evento cambió, actualizar códigos de invitación
+      if (codigoEvento !== codigoEventoOriginal) {
+        await actualizarCodigosInvitacion(codigoEvento);
+        setCodigoEventoOriginal(codigoEvento);
+      }
+
       // Procesar invitados
       for (const invitado of invitados) {
         if (!invitado.name.trim()) continue;
@@ -177,8 +238,13 @@ export const useEditarEvento = (eventoId: string | undefined) => {
           if (updateError) throw updateError;
         } else {
           // Crear nuevo invitado
-          const invitationCode = `${invitado.name.replace(/\s+/g, '')}-${Date.now()}`;
-          const qrCodeData = `${window.location.origin}/invitacion?codigo=${invitationCode}`;
+          const invitationCode = generarCodigoInvitacion(invitados.indexOf(invitado), codigoEvento, invitado.name);
+          const qrCodeData = JSON.stringify({
+            event_id: eventoId,
+            event_name: nombreEvento,
+            guest_name: invitado.name,
+            invitation_code: invitationCode
+          });
 
           const { error: insertError } = await supabase
             .from('guests')
