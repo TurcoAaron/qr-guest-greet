@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2, Image as ImageIcon, Shield } from "lucide-react";
+import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2, Image as ImageIcon, Shield, Hash } from "lucide-react";
 import { TemplateSelector } from "@/components/invitation-templates/TemplateSelector";
 import { ImageUploader } from "@/components/events/ImageUploader";
 import type { EventImage } from "@/types/event";
@@ -39,6 +38,7 @@ const CrearEvento = () => {
   const [templateId, setTemplateId] = useState("modern");
   const [images, setImages] = useState<EventImage[]>([]);
   const [validateFullAttendance, setValidateFullAttendance] = useState(false);
+  const [codigoEvento, setCodigoEvento] = useState("");
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([]);
@@ -65,9 +65,10 @@ const CrearEvento = () => {
     setInvitados(nuevosInvitados);
   };
 
-  const generarCodigoInvitacion = (index: number, codigoEvento: string) => {
+  const generarCodigoInvitacion = (index: number, codigoEvento: string, nombreInvitado: string) => {
     const numeracion = (index + 1).toString().padStart(2, '0');
-    return `INV-${codigoEvento}-${numeracion}`;
+    const nombreLimpio = nombreInvitado.replace(/\s+/g, '').substring(0, 3).toUpperCase();
+    return `INV-${codigoEvento}-${nombreLimpio}-${numeracion}`;
   };
 
   const crearEvento = async () => {
@@ -104,7 +105,8 @@ const CrearEvento = () => {
     setLoading(true);
 
     try {
-      const codigoEvento = generarCodigoEvento();
+      // Usar el código personalizado o generar uno automático
+      const codigoEventoFinal = codigoEvento.trim() || generarCodigoEvento();
       const primaryImageUrl = images.sort((a,b) => a.preference - b.preference)[0]?.file
         ? 'placeholder' // We need an ID before we can generate a permanent URL.
         : null;
@@ -118,7 +120,7 @@ const CrearEvento = () => {
           start_date: fechaInicio,
           end_date: fechaFin || null,
           location: ubicacion?.trim() || null,
-          event_code: codigoEvento,
+          event_code: codigoEventoFinal,
           organizer_id: user?.id,
           status: 'upcoming',
           event_type: tipoEvento?.trim() || null,
@@ -170,7 +172,7 @@ const CrearEvento = () => {
       // Crear invitados si hay alguno
       if (invitadosValidos.length > 0) {
         for (const [index, invitado] of invitadosValidos.entries()) {
-          const codigoInvitacion = generarCodigoInvitacion(index, codigoEvento);
+          const codigoInvitacion = generarCodigoInvitacion(index, codigoEventoFinal, invitado.name);
           const qrData = JSON.stringify({
             event_id: eventoData.id,
             event_name: nombreEvento,
@@ -195,7 +197,7 @@ const CrearEvento = () => {
 
       toast({
         title: "¡Evento Creado!",
-        description: `Se creó el evento "${nombreEvento}" con código ${codigoEvento}`,
+        description: `Se creó el evento "${nombreEvento}" con código ${codigoEventoFinal}`,
       });
 
       navigate(`/editar-evento/${eventoData.id}`);
@@ -281,6 +283,25 @@ const CrearEvento = () => {
                     onChange={(e) => setDescripcion(e.target.value)}
                     rows={3}
                   />
+                </div>
+
+                {/* Código del evento personalizable */}
+                <div className="space-y-2">
+                  <Label htmlFor="codigoEvento" className="flex items-center space-x-2">
+                    <Hash className="w-4 h-4" />
+                    <span>Código del Evento</span>
+                  </Label>
+                  <Input
+                    id="codigoEvento"
+                    type="text"
+                    placeholder="Ej: BODA2024-MJ (opcional - se generará automáticamente si se deja vacío)"
+                    value={codigoEvento}
+                    onChange={(e) => setCodigoEvento(e.target.value)}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Código único para identificar el evento. Si no lo especificas, se generará uno automáticamente.
+                  </p>
                 </div>
               </CardContent>
             </Card>
