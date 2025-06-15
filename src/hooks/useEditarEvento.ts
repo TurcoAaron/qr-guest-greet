@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,7 +72,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
         setTipoEvento(eventoData.event_type || "");
         setCodigoVestimenta(eventoData.dress_code || "");
         setTemplateId(eventoData.template_id || "modern");
-        setValidateFullAttendance((eventoData as any).validate_full_attendance || false);
+        setValidateFullAttendance(eventoData.validate_full_attendance || false);
       }
 
       // Cargar imágenes del evento

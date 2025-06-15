@@ -1,3 +1,4 @@
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useEditarEvento } from "@/hooks/useEditarEvento";
 import { EventInfoForm } from "@/components/events/EventInfoForm";
@@ -36,6 +37,8 @@ const EditarEvento = () => {
     setImages,
     invitados,
     setInvitados,
+    validateFullAttendance,
+    setValidateFullAttendance,
     guardarCambios
   } = useEditarEvento(eventoId);
 
@@ -77,6 +80,8 @@ const EditarEvento = () => {
             setTemplateId={setTemplateId}
             images={images}
             setImages={setImages}
+            validateFullAttendance={validateFullAttendance}
+            setValidateFullAttendance={setValidateFullAttendance}
             evento={evento}
             loading={loading}
           />

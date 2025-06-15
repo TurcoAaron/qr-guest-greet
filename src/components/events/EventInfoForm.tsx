@@ -1,9 +1,11 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, MapPin, Clock, Palette, Image as ImageIcon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { CalendarDays, MapPin, Clock, Palette, Image as ImageIcon, Shield } from "lucide-react";
 import { TemplateSelector } from "../invitation-templates/TemplateSelector";
 import { ImageUploader } from "./ImageUploader";
 import type { EventImage } from "@/types/event";
@@ -29,6 +31,8 @@ interface EventInfoFormProps {
   setTemplateId: (value: string) => void;
   images: EventImage[];
   setImages: (value: EventImage[]) => void;
+  validateFullAttendance: boolean;
+  setValidateFullAttendance: (value: boolean) => void;
   evento?: any;
   loading: boolean;
 }
@@ -54,6 +58,8 @@ export const EventInfoForm = ({
   setTemplateId,
   images,
   setImages,
+  validateFullAttendance,
+  setValidateFullAttendance,
   evento,
   loading
 }: EventInfoFormProps) => {
@@ -104,6 +110,33 @@ export const EventInfoForm = ({
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Configuración de Seguridad */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Shield className="w-5 h-5" />
+            <span>Configuración de Seguridad</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="validateFullAttendance" className="text-base">
+                Validar Asistencia Completa
+              </Label>
+              <div className="text-sm text-muted-foreground">
+                Requiere que todos los invitados del grupo estén presentes para permitir el acceso
+              </div>
+            </div>
+            <Switch
+              id="validateFullAttendance"
+              checked={validateFullAttendance}
+              onCheckedChange={setValidateFullAttendance}
             />
           </div>
         </CardContent>

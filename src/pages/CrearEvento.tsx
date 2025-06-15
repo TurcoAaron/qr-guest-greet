@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2, Image as ImageIcon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2, Image as ImageIcon, Shield } from "lucide-react";
 import { TemplateSelector } from "@/components/invitation-templates/TemplateSelector";
 import { ImageUploader } from "@/components/events/ImageUploader";
 import type { EventImage } from "@/types/event";
@@ -36,6 +38,7 @@ const CrearEvento = () => {
   const [codigoVestimenta, setCodigoVestimenta] = useState("");
   const [templateId, setTemplateId] = useState("modern");
   const [images, setImages] = useState<EventImage[]>([]);
+  const [validateFullAttendance, setValidateFullAttendance] = useState(false);
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([]);
@@ -121,7 +124,8 @@ const CrearEvento = () => {
           event_type: tipoEvento?.trim() || null,
           dress_code: codigoVestimenta?.trim() || null,
           template_id: templateId,
-          image_url: primaryImageUrl
+          image_url: primaryImageUrl,
+          validate_full_attendance: validateFullAttendance
         })
         .select()
         .single();
@@ -276,6 +280,33 @@ const CrearEvento = () => {
                     value={descripcion}
                     onChange={(e) => setDescripcion(e.target.value)}
                     rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Configuración de Seguridad */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5" />
+                  <span>Configuración de Seguridad</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="validateFullAttendance" className="text-base">
+                      Validar Asistencia Completa
+                    </Label>
+                    <div className="text-sm text-muted-foreground">
+                      Requiere que todos los invitados del grupo estén presentes para permitir el acceso
+                    </div>
+                  </div>
+                  <Switch
+                    id="validateFullAttendance"
+                    checked={validateFullAttendance}
+                    onCheckedChange={setValidateFullAttendance}
                   />
                 </div>
               </CardContent>
