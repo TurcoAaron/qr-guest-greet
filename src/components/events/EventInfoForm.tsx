@@ -1,11 +1,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "lucide-react";
-import { Evento } from "@/hooks/useEditarEvento";
+import { CalendarDays, MapPin, Clock, Palette } from "lucide-react";
+import { TemplateSelector } from "../invitation-templates/TemplateSelector";
 
 interface EventInfoFormProps {
   nombreEvento: string;
@@ -26,7 +27,7 @@ interface EventInfoFormProps {
   setCodigoVestimenta: (value: string) => void;
   templateId: string;
   setTemplateId: (value: string) => void;
-  evento: Evento;
+  evento?: any;
 }
 
 export const EventInfoForm = ({
@@ -51,161 +52,176 @@ export const EventInfoForm = ({
   evento
 }: EventInfoFormProps) => {
   return (
-    <Card className="mb-8">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Calendar className="w-5 h-5" />
-          <span>Información del Evento</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="nombre">Nombre del Evento *</Label>
-            <Input
-              id="nombre"
-              type="text"
-              placeholder="Nombre del evento"
-              value={nombreEvento}
-              onChange={(e) => setNombreEvento(e.target.value)}
-              className="mt-2"
+    <div className="space-y-8">
+      {/* Información básica */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <CalendarDays className="w-5 h-5" />
+            <span>Información del Evento</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="nombre">Nombre del Evento *</Label>
+              <Input
+                id="nombre"
+                type="text"
+                placeholder="Ej: Boda de María y Juan"
+                value={nombreEvento}
+                onChange={(e) => setNombreEvento(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Estado</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona el estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="upcoming">Próximo</SelectItem>
+                  <SelectItem value="active">Activo</SelectItem>
+                  <SelectItem value="completed">Completado</SelectItem>
+                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="descripcion">Descripción</Label>
+            <Textarea
+              id="descripcion"
+              placeholder="Describe tu evento..."
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              rows={3}
             />
           </div>
-          
-          <div>
-            <Label htmlFor="status">Estado del Evento</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Selecciona el estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="upcoming">Próximo</SelectItem>
-                <SelectItem value="active">Activo</SelectItem>
-                <SelectItem value="completed">Completado</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="grid md:grid-cols-4 gap-6">
-          <div>
-            <Label htmlFor="tipo">Tipo de Evento</Label>
-            <Select value={tipoEvento} onValueChange={setTipoEvento}>
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Selecciona el tipo de evento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="conference">Conferencia</SelectItem>
-                <SelectItem value="wedding">Boda</SelectItem>
-                <SelectItem value="birthday">Cumpleaños</SelectItem>
-                <SelectItem value="corporate">Corporativo</SelectItem>
-                <SelectItem value="social">Social</SelectItem>
-                <SelectItem value="workshop">Taller</SelectItem>
-                <SelectItem value="seminar">Seminario</SelectItem>
-                <SelectItem value="other">Otro</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Fecha y ubicación */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Clock className="w-5 h-5" />
+            <span>Fecha y Ubicación</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="fechaInicio">Fecha y Hora de Inicio *</Label>
+              <Input
+                id="fechaInicio"
+                type="datetime-local"
+                value={fechaInicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fechaFin">Fecha y Hora de Fin</Label>
+              <Input
+                id="fechaFin"
+                type="datetime-local"
+                value={fechaFin}
+                onChange={(e) => setFechaFin(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
-            <Select value={codigoVestimenta} onValueChange={setCodigoVestimenta}>
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Selecciona el código de vestimenta" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="formal">Formal</SelectItem>
-                <SelectItem value="semi-formal">Semi-formal</SelectItem>
-                <SelectItem value="casual">Casual</SelectItem>
-                <SelectItem value="business">Ejecutivo</SelectItem>
-                <SelectItem value="cocktail">Cocktail</SelectItem>
-                <SelectItem value="black-tie">Etiqueta</SelectItem>
-                <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
-                <SelectItem value="theme">Temático</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-2">
+            <Label htmlFor="ubicacion">Ubicación</Label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                id="ubicacion"
+                type="text"
+                placeholder="Ej: Salón de Eventos Plaza Mayor"
+                value={ubicacion}
+                onChange={(e) => setUbicacion(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div>
-            <Label htmlFor="template">Template de Invitación</Label>
-            <Select value={templateId} onValueChange={setTemplateId}>
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Selecciona el template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="modern">Moderno</SelectItem>
-                <SelectItem value="elegant">Elegante</SelectItem>
-                <SelectItem value="festive">Festivo</SelectItem>
-                <SelectItem value="corporate">Corporativo</SelectItem>
-                <SelectItem value="minimalist">Minimalista</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Detalles del evento */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Detalles Adicionales</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="tipoEvento">Tipo de Evento</Label>
+              <Select value={tipoEvento} onValueChange={setTipoEvento}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona el tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="wedding">Boda</SelectItem>
+                  <SelectItem value="birthday">Cumpleaños</SelectItem>
+                  <SelectItem value="conference">Conferencia</SelectItem>
+                  <SelectItem value="corporate">Corporativo</SelectItem>
+                  <SelectItem value="social">Social</SelectItem>
+                  <SelectItem value="workshop">Taller</SelectItem>
+                  <SelectItem value="seminar">Seminario</SelectItem>
+                  <SelectItem value="other">Otro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
+              <Select value={codigoVestimenta} onValueChange={setCodigoVestimenta}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona el código" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="formal">Formal</SelectItem>
+                  <SelectItem value="semi-formal">Semi-formal</SelectItem>
+                  <SelectItem value="casual">Casual</SelectItem>
+                  <SelectItem value="business">Ejecutivo</SelectItem>
+                  <SelectItem value="cocktail">Cocktail</SelectItem>
+                  <SelectItem value="black-tie">Etiqueta</SelectItem>
+                  <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
+                  <SelectItem value="theme">Temático</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div>
-            <Label htmlFor="codigoEvento">Código del Evento</Label>
-            <Input
-              id="codigoEvento"
-              type="text"
-              value={evento.event_code}
-              disabled
-              className="mt-2 bg-gray-100"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              El código no se puede modificar
-            </p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="fechaInicio">Fecha y Hora de Inicio *</Label>
-            <Input
-              id="fechaInicio"
-              type="datetime-local"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="mt-2"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="fechaFin">Fecha y Hora de Fin</Label>
-            <Input
-              id="fechaFin"
-              type="datetime-local"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              className="mt-2"
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label htmlFor="ubicacion">Ubicación</Label>
-          <Input
-            id="ubicacion"
-            type="text"
-            placeholder="Lugar donde se realizará el evento"
-            value={ubicacion}
-            onChange={(e) => setUbicacion(e.target.value)}
-            className="mt-2"
+      {/* Selector de Template */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Palette className="w-5 h-5" />
+            <span>Template de Invitación</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TemplateSelector
+            selectedTemplate={templateId}
+            onTemplateSelect={setTemplateId}
+            eventData={{
+              name: nombreEvento,
+              description: descripcion,
+              start_date: fechaInicio,
+              end_date: fechaFin,
+              location: ubicacion,
+              event_type: tipoEvento,
+              dress_code: codigoVestimenta
+            }}
           />
-        </div>
-
-        <div>
-          <Label htmlFor="descripcion">Descripción</Label>
-          <Textarea
-            id="descripcion"
-            placeholder="Descripción del evento (opcional)"
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            className="mt-2"
-            rows={3}
-          />
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

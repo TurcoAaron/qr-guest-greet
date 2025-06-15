@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useEditarEvento } from "@/hooks/useEditarEvento";
 import { EventInfoForm } from "@/components/events/EventInfoForm";
@@ -87,6 +86,7 @@ const EditarEvento = () => {
             ubicacion={ubicacion}
             tipoEvento={tipoEvento}
             codigoVestimenta={codigoVestimenta}
+            templateId={templateId}
           />
 
           <EventActions

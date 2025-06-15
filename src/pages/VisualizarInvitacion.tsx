@@ -127,6 +127,7 @@ const VisualizarInvitacion = () => {
       templateId={evento.template_id || 'modern'}
       invitado={invitado}
       evento={evento}
+      showRSVP={true}
     />
   );
 };

@@ -20,6 +20,7 @@ interface GuestManagementProps {
   ubicacion: string;
   tipoEvento: string;
   codigoVestimenta: string;
+  templateId: string;
 }
 
 export const GuestManagement = ({
@@ -31,7 +32,8 @@ export const GuestManagement = ({
   fechaFin,
   ubicacion,
   tipoEvento,
-  codigoVestimenta
+  codigoVestimenta,
+  templateId
 }: GuestManagementProps) => {
   const { toast } = useToast();
   const [previewInvitado, setPreviewInvitado] = useState<Invitado | null>(null);
@@ -163,6 +165,7 @@ export const GuestManagement = ({
         ubicacion={ubicacion}
         tipoEvento={tipoEvento}
         codigoVestimenta={codigoVestimenta}
+        templateId={templateId}
         onClose={() => setPreviewInvitado(null)}
       />
     </>
