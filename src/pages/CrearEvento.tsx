@@ -55,11 +55,8 @@ const CrearEvento = () => {
   };
 
   const generarCodigoEvento = () => {
+    // Mantener "EVT" como prefijo, seguido de 6 dígitos del timestamp para facilidad.
     return `EVT${Date.now().toString().slice(-6)}`;
-  };
-
-  const generarCodigoInvitacion = (index: number) => {
-    return `INV${Date.now().toString().slice(-6)}${(index + 1).toString().padStart(2, '0')}`;
   };
 
   const crearEvento = async () => {
@@ -113,7 +110,7 @@ const CrearEvento = () => {
     setLoading(true);
 
     try {
-      // Crear el evento
+      // 1. Generar código de evento y crear el evento
       const codigoEvento = generarCodigoEvento();
       const { data: evento, error: errorEvento } = await supabase
         .from('events')
@@ -135,9 +132,12 @@ const CrearEvento = () => {
 
       if (errorEvento) throw errorEvento;
 
-      // Crear los invitados
+      // 2. Crear invitados con código INV-{codigoEvento}-{NN}
+      const invitadosValidos = invitados.filter(inv => inv.name.trim());
       const invitadosParaCrear = invitadosValidos.map((invitado, index) => {
-        const codigoInvitacion = generarCodigoInvitacion(index);
+        // Código personalizado de invitación:
+        const numeracion = (index + 1).toString().padStart(2, '0');
+        const codigoInvitacion = `INV-${codigoEvento}-${numeracion}`;
         const qrData = JSON.stringify({
           event_id: evento.id,
           event_name: nombreEvento,
