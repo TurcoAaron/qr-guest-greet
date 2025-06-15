@@ -1,134 +1,175 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Users, Download, Trash2, Search, Calendar, UserCheck, UserPlus, Filter, RefreshCw, Baby, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Calendar,
+  Users,
+  UserCheck,
+  Baby,
+  Heart,
+  RefreshCw,
+  Download,
+  Eye,
+  Edit,
+  CheckCircle,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
+interface Evento {
+  id: string;
+  name: string;
+  date: string;
+  start_date: string;
+  status: string;
+}
+
+interface Invitado {
+  id: string;
+  event_id: string;
+  adults_count: number;
+  children_count: number;
+  pets_count: number;
+}
+
+interface Asistencia {
+  id: string;
+  guest_id: string;
+  event_id: string;
+  actual_adults_count: number | null;
+  actual_children_count: number | null;
+  actual_pets_count: number | null;
+  guests: {
+    name: string;
+    adults_count: number;
+    children_count: number;
+    pets_count: number;
+  };
+}
 
 const Administrar = () => {
-  const [asistencias, setAsistencias] = useState<string[]>([]);
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [invitados, setInvitados] = useState<Invitado[]>([]);
+  const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
+  const [loadingEventos, setLoadingEventos] = useState(true);
   const [filtro, setFiltro] = useState("");
-  const [eventos, setEventos] = useState<any[]>([]);
-  const [eventoSeleccionado, setEventoSeleccionado] = useState<string>("todos");
-  const [invitados, setInvitados] = useState<any[]>([]);
-  const [asistenciasDB, setAsistenciasDB] = useState<any[]>([]);
-  const [respuestasRSVP, setRespuestasRSVP] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const asistenciasGuardadas = localStorage.getItem("asistencias");
-    if (asistenciasGuardadas) {
-      setAsistencias(JSON.parse(asistenciasGuardadas));
-    }
-    cargarDatosSupabase();
-  }, []);
-
-  // Auto-refresh cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      cargarDatosSupabase();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const cargarDatosSupabase = async () => {
-    setLoading(true);
+  const cargarDatos = async () => {
+    setLoadingEventos(true);
     try {
-      // Cargar eventos
-      const { data: eventosData } = await supabase
+      const { data: eventosData, error: eventosError } = await supabase
         .from('events')
         .select('*')
         .order('created_at', { ascending: false });
-      
-      if (eventosData) {
-        setEventos(eventosData);
-      }
 
-      // Cargar invitados
-      const { data: invitadosData } = await supabase
+      if (eventosError) throw eventosError;
+      setEventos(eventosData || []);
+
+      // Cargar invitados con mascotas
+      const { data: invitadosData, error: invitadosError } = await supabase
         .from('guests')
         .select('*');
-      
-      if (invitadosData) {
-        setInvitados(invitadosData);
-      }
 
-      // Cargar asistencias con mejor query
-      const { data: asistenciasData } = await supabase
+      if (invitadosError) throw invitadosError;
+      setInvitados(invitadosData || []);
+
+      // Cargar asistencias
+      const { data: asistenciasData, error: asistenciasError } = await supabase
         .from('attendances')
         .select(`
           *,
-          guests!inner (id, name, email, event_id),
-          events!inner (id, name)
-        `)
-        .order('checked_in_at', { ascending: false });
-      
-      if (asistenciasData) {
-        console.log('Asistencias cargadas:', asistenciasData);
-        setAsistenciasDB(asistenciasData);
-      }
+          guests (*),
+          events (*)
+        `);
 
-      // Cargar respuestas RSVP
-      const { data: rsvpData } = await supabase
-        .from('rsvp_responses')
-        .select(`
-          *,
-          guests!inner (id, name, email, event_id),
-          events!inner (id, name)
-        `)
-        .eq('response', 'attending');
-      
-      if (rsvpData) {
-        setRespuestasRSVP(rsvpData);
-      }
+      if (asistenciasError) throw asistenciasError;
+      setAsistencias(asistenciasData || []);
+
     } catch (error) {
       console.error('Error cargando datos:', error);
       toast({
         title: "Error",
-        description: "Error al cargar los datos",
+        description: "No se pudieron cargar los datos",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setLoadingEventos(false);
     }
   };
 
-  const refrescarDatos = () => {
-    cargarDatosSupabase();
-    toast({
-      title: "Datos Actualizados",
-      description: "La información se ha actualizado correctamente",
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const procesarAsistencias = () => {
+    return asistencias.map((asistencia) => {
+      const invitado = invitados.find((invitado) => invitado.id === asistencia.guest_id);
+      const evento = eventos.find((evento) => evento.id === asistencia.event_id);
+
+      return {
+        id: asistencia.id,
+        nombre: asistencia.guests?.name || "Invitado Desconocido",
+        evento: evento?.name || "Evento Desconocido",
+        fecha: evento?.date || evento?.start_date || "Fecha Desconocida",
+        adultosConfirmados: invitado?.adults_count || 0,
+        niñosConfirmados: invitado?.children_count || 0,
+        mascotasConfirmadas: (invitado as any)?.pets_count || 0,
+        adultosPresentes: asistencia.actual_adults_count !== null ? asistencia.actual_adults_count : asistencia.guests?.adults_count || 0,
+        niñosPresentes: asistencia.actual_children_count !== null ? asistencia.actual_children_count : asistencia.guests?.children_count || 0,
+        mascotasPresentes: asistencia.actual_pets_count !== null ? asistencia.actual_pets_count : (asistencia.guests as any)?.pets_count || 0,
+      };
     });
   };
 
-  const procesarAsistencias = () => {
-    return asistencias.map(codigo => {
-      const partes = codigo.split('-');
-      const nombre = partes[0];
-      const timestamp = parseInt(partes[1]);
-      const fecha = new Date(timestamp);
-      
+  const exportarCSV = () => {
+    const data = asistencias.map((asistencia) => {
+      const invitado = invitados.find((invitado) => invitado.id === asistencia.guest_id);
+      const evento = eventos.find((evento) => evento.id === asistencia.event_id);
+
       return {
-        codigo,
-        nombre,
-        timestamp,
-        fecha: fecha.toLocaleDateString(),
-        hora: fecha.toLocaleTimeString(),
+        Nombre: asistencia.guests?.name || "Invitado Desconocido",
+        Evento: evento?.name || "Evento Desconocido",
+        Fecha: evento?.date || evento?.start_date || "Fecha Desconocida",
+        AdultosConfirmados: invitado?.adults_count || 0,
+        NiñosConfirmados: invitado?.children_count || 0,
+        MascotasConfirmadas: (invitado as any)?.pets_count || 0,
+        AdultosPresentes: asistencia.actual_adults_count !== null ? asistencia.actual_adults_count : asistencia.guests?.adults_count || 0,
+        NiñosPresentes: asistencia.actual_children_count !== null ? asistencia.actual_children_count : asistencia.guests?.children_count || 0,
+        MascotasPresentes: asistencia.actual_pets_count !== null ? asistencia.actual_pets_count : (asistencia.guests as any)?.pets_count || 0,
       };
     });
+
+    const csvRows = [];
+    const headers = Object.keys(data[0]);
+    csvRows.push(headers.join(','));
+
+    for (const row of data) {
+      const values = headers.map(header => {
+        const escaped = ('' + row[header]).replace(/"/g, '""');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(','));
+    }
+
+    const csvData = csvRows.join('\n');
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'asistencias.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const asistenciasProcesadas = procesarAsistencias();
@@ -136,604 +177,222 @@ const Administrar = () => {
     filtro === "" || asistencia.nombre.toLowerCase().includes(filtro.toLowerCase())
   );
 
-  const exportarCSV = () => {
-    const headers = ["Nombre", "Fecha", "Hora", "Código"];
-    const rows = asistenciasProcesadas.map(a => [
-      a.nombre,
-      a.fecha,
-      a.hora,
-      a.codigo
-    ]);
-
-    const csvContent = [headers, ...rows]
-      .map(row => row.join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `asistencias-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Exportación Exitosa",
-      description: "Los datos se han exportado a CSV",
-    });
-  };
-
-  const limpiarDatos = () => {
-    if (confirm("¿Estás seguro de que quieres eliminar todos los registros de asistencia?")) {
-      localStorage.removeItem("asistencias");
-      setAsistencias([]);
-      toast({
-        title: "Datos Eliminados",
-        description: "Todos los registros han sido eliminados",
-      });
-    }
-  };
-
-  // Estadísticas generales
-  const estadisticasGenerales = {
+  // Estadísticas globales simplificadas
+  const estadisticasGlobales = {
     totalEventos: eventos.length,
-    eventosActivos: eventos.filter(e => e.status === 'active').length,
-    totalConfirmados: respuestasRSVP.length,
-    totalPresentes: asistenciasDB.length,
-    totalAsistenciasLocal: asistencias.length,
+    totalInvitados: invitados.length,
+    totalAsistencias: asistencias.length,
     totalAdultos: invitados.reduce((total, inv) => total + (inv.adults_count || 0), 0),
     totalNiños: invitados.reduce((total, inv) => total + (inv.children_count || 0), 0),
     totalMascotas: invitados.reduce((total, inv) => total + ((inv as any).pets_count || 0), 0),
   };
 
-  // Estadísticas por evento seleccionado
-  const eventoActual = eventos.find(e => e.id === eventoSeleccionado);
-  const confirmadosEvento = respuestasRSVP.filter(r => 
-    eventoSeleccionado === "todos" ? true : r.guests?.event_id === eventoSeleccionado
-  );
-  const presentesEvento = asistenciasDB.filter(a => 
-    eventoSeleccionado === "todos" ? true : a.guests?.event_id === eventoSeleccionado
-  );
-
-  const estadisticasEvento = {
-    confirmados: confirmadosEvento.length,
-    presentes: presentesEvento.length,
-    invitados: eventoSeleccionado === "todos" 
-      ? invitados.length 
-      : invitados.filter(i => i.event_id === eventoSeleccionado).length,
+  // Estadísticas por evento
+  const getEstadisticasEvento = (evento: any) => {
+    const invitadosEvento = invitados.filter(inv => inv.event_id === evento.id);
+    const asistenciasEvento = asistencias.filter(a => a.event_id === evento.id);
+    
+    return {
+      confirmados: {
+        adultos: invitadosEvento.reduce((total, inv) => total + (inv.adults_count || 0), 0),
+        niños: invitadosEvento.reduce((total, inv) => total + (inv.children_count || 0), 0),
+        mascotas: invitadosEvento.reduce((total, inv) => total + ((inv as any).pets_count || 0), 0),
+      },
+      presentes: {
+        adultos: asistenciasEvento.reduce((total, a) => total + (a.actual_adults_count || (a.guests as any)?.adults_count || 0), 0),
+        niños: asistenciasEvento.reduce((total, a) => total + (a.actual_children_count || (a.guests as any)?.children_count || 0), 0),
+        mascotas: asistenciasEvento.reduce((total, a) => total + (a.actual_pets_count || (a.guests as any)?.pets_count || 0), 0),
+      },
+      totalInvitados: invitadosEvento.length,
+      totalPresentes: asistenciasEvento.length,
+    };
   };
 
+  if (loadingEventos) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 py-8">
-      <div className="container mx-auto px-4">
-        <div className="max-w-7xl mx-auto space-y-8">
-          
-          {/* Header */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Panel de Administración
-            </h1>
-            <p className="text-gray-600">
-              Gestiona y monitorea las asistencias de todos los eventos
-            </p>
-          </div>
-
-          {/* Filtros principales */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Filter className="w-5 h-5" />
-                  <span>Filtros y Controles</span>
-                </div>
-                <Button
-                  onClick={refrescarDatos}
-                  variant="outline"
-                  size="sm"
-                  disabled={loading}
-                >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Actualizar
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4 items-center">
-                <div className="flex items-center space-x-2 min-w-[250px]">
-                  <span className="text-sm font-medium">Evento:</span>
-                  <Select value={eventoSeleccionado} onValueChange={setEventoSeleccionado}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Selecciona un evento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos los eventos</SelectItem>
-                      {eventos.map((evento) => (
-                        <SelectItem key={evento.id} value={evento.id}>
-                          {evento.name} ({evento.status})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-center space-x-2 flex-1 min-w-[200px]">
-                  <Search className="w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar por nombre..."
-                    value={filtro}
-                    onChange={(e) => setFiltro(e.target.value)}
-                    className="flex-1"
-                  />
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={exportarCSV}
-                    variant="outline"
-                    disabled={asistencias.length === 0}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar
-                  </Button>
-                  
-                  <Button
-                    onClick={limpiarDatos}
-                    variant="destructive"
-                    disabled={asistencias.length === 0}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Limpiar
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="general">Vista General</TabsTrigger>
-              <TabsTrigger value="evento">Por Evento</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="general" className="space-y-6">
-              {/* Estadísticas generales actualizadas */}
-              <div className="grid md:grid-cols-8 gap-4">
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Calendar className="w-8 h-8 mx-auto text-blue-600 mb-2" />
-                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalEventos}</div>
-                    <div className="text-sm text-gray-600">Total Eventos</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <div className="w-8 h-8 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
-                      <span className="text-green-600 font-bold text-sm">ACT</span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.eventosActivos}</div>
-                    <div className="text-sm text-gray-600">Eventos Activos</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <UserCheck className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
-                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalConfirmados}</div>
-                    <div className="text-sm text-gray-600">Total Confirmados</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <UserPlus className="w-8 h-8 mx-auto text-purple-600 mb-2" />
-                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalPresentes}</div>
-                    <div className="text-sm text-gray-600">Total Presentes</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Users className="w-8 h-8 mx-auto text-orange-600 mb-2" />
-                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalAsistenciasLocal}</div>
-                    <div className="text-sm text-gray-600">Asistencias Local</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Users className="w-8 h-8 mx-auto text-indigo-600 mb-2" />
-                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalAdultos}</div>
-                    <div className="text-sm text-gray-600">Total Adultos</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Baby className="w-8 h-8 mx-auto text-pink-600 mb-2" />
-                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalNiños}</div>
-                    <div className="text-sm text-gray-600">Total Niños</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Heart className="w-8 h-8 mx-auto text-red-600 mb-2" />
-                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalMascotas}</div>
-                    <div className="text-sm text-gray-600">Total Mascotas</div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Todas las asistencias registradas */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Todas las Asistencias Registradas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {asistenciasDB.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      No hay asistencias registradas
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Evento</TableHead>
-                          <TableHead>Adultos</TableHead>
-                          <TableHead>Niños</TableHead>
-                          <TableHead>Mascotas</TableHead>
-                          <TableHead>Hora de Llegada</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {asistenciasDB
-                          .filter(asistencia => 
-                            filtro === "" || 
-                            asistencia.guests?.name?.toLowerCase().includes(filtro.toLowerCase())
-                          )
-                          .map((asistencia) => (
-                          <TableRow key={asistencia.id}>
-                            <TableCell className="font-medium">{asistencia.guests?.name || 'N/A'}</TableCell>
-                            <TableCell>{asistencia.guests?.email || 'N/A'}</TableCell>
-                            <TableCell>{asistencia.events?.name || 'N/A'}</TableCell>
-                            <TableCell>{asistencia.actual_adults_count || asistencia.guests?.adults_count || '-'}</TableCell>
-                            <TableCell>{asistencia.actual_children_count || asistencia.guests?.children_count || '-'}</TableCell>
-                            <TableCell>{asistencia.actual_pets_count || (asistencia.guests as any)?.pets_count || '-'}</TableCell>
-                            <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Resumen por eventos */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Resumen por Eventos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Evento</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead>Invitados</TableHead>
-                        <TableHead>Confirmados</TableHead>
-                        <TableHead>Presentes</TableHead>
-                        <TableHead>Adultos</TableHead>
-                        <TableHead>Niños</TableHead>
-                        <TableHead>Mascotas</TableHead>
-                        <TableHead>% Asistencia</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {eventos.map((evento) => {
-                        const invitadosEvento = invitados.filter(i => i.event_id === evento.id);
-                        const confirmadosEvento = respuestasRSVP.filter(r => 
-                          r.guests?.event_id === evento.id
-                        ).length;
-                        const presentesEvento = asistenciasDB.filter(a => 
-                          a.guests?.event_id === evento.id
-                        ).length;
-                        const adultosEvento = invitadosEvento.reduce((total, inv) => total + (inv.adults_count || 0), 0);
-                        const niñosEvento = invitadosEvento.reduce((total, inv) => total + (inv.children_count || 0), 0);
-                        const mascotasEvento = invitadosEvento.reduce((total, inv) => total + ((inv as any).pets_count || 0), 0);
-                        const porcentaje = confirmadosEvento > 0 ? Math.round((presentesEvento / confirmadosEvento) * 100) : 0;
-
-                        return (
-                          <TableRow key={evento.id}>
-                            <TableCell className="font-medium">{evento.name}</TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                evento.status === 'active' ? 'bg-green-100 text-green-800' :
-                                evento.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {evento.status}
-                              </span>
-                            </TableCell>
-                            <TableCell>{invitadosEvento.length}</TableCell>
-                            <TableCell>{confirmadosEvento}</TableCell>
-                            <TableCell>{presentesEvento}</TableCell>
-                            <TableCell>{adultosEvento}</TableCell>
-                            <TableCell>{niñosEvento}</TableCell>
-                            <TableCell>{mascotasEvento}</TableCell>
-                            <TableCell>{porcentaje}%</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="evento" className="space-y-6">
-              {eventoSeleccionado && eventoSeleccionado !== "todos" && eventoActual ? (
-                <>
-                  {/* Header del evento */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-xl">{eventoActual.name}</CardTitle>
-                      <p className="text-gray-600">{eventoActual.description}</p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>📅 {new Date(eventoActual.start_date || eventoActual.date).toLocaleDateString()}</span>
-                        <span>📍 {eventoActual.location}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          eventoActual.status === 'active' ? 'bg-green-100 text-green-800' :
-                          eventoActual.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {eventoActual.status}
-                        </span>
-                      </div>
-                    </CardHeader>
-                  </Card>
-
-                  {/* Estadísticas del evento */}
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <Card>
-                      <CardContent className="p-6 text-center">
-                        <Users className="w-8 h-8 mx-auto text-blue-600 mb-2" />
-                        <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.invitados}</div>
-                        <div className="text-sm text-gray-600">Invitados Totales</div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardContent className="p-6 text-center">
-                        <UserCheck className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
-                        <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.confirmados}</div>
-                        <div className="text-sm text-gray-600">Confirmaron</div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardContent className="p-6 text-center">
-                        <UserPlus className="w-8 h-8 mx-auto text-purple-600 mb-2" />
-                        <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.presentes}</div>
-                        <div className="text-sm text-gray-600">Presentes</div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Presentes del evento */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Asistencias del Evento</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {presentesEvento.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          No hay asistencias registradas para este evento
-                        </div>
-                      ) : (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Nombre</TableHead>
-                              <TableHead>Email</TableHead>
-                              <TableHead>Hora de Llegada</TableHead>
-                              <TableHead>Estado</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {presentesEvento.map((asistencia) => (
-                              <TableRow key={asistencia.id}>
-                                <TableCell className="font-medium">{asistencia.guests?.name}</TableCell>
-                                <TableCell>{asistencia.guests?.email}</TableCell>
-                                <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
-                                <TableCell>
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Presente
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Confirmados del evento */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Invitados que Confirmaron</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {confirmadosEvento.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          No hay confirmaciones para este evento
-                        </div>
-                      ) : (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Nombre</TableHead>
-                              <TableHead>Email</TableHead>
-                              <TableHead>Fecha Confirmación</TableHead>
-                              <TableHead>Estado</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {confirmadosEvento.map((rsvp) => {
-                              const estaPresente = presentesEvento.some(p => p.guest_id === rsvp.guest_id);
-                              return (
-                                <TableRow key={rsvp.id}>
-                                  <TableCell className="font-medium">{rsvp.guests?.name}</TableCell>
-                                  <TableCell>{rsvp.guests?.email}</TableCell>
-                                  <TableCell>{new Date(rsvp.created_at).toLocaleDateString()}</TableCell>
-                                  <TableCell>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      estaPresente ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                    }`}>
-                                      {estaPresente ? 'Presente' : 'Pendiente'}
-                                    </span>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      )}
-                    </CardContent>
-                  </Card>
-                </>
-              ) : eventoSeleccionado === "todos" ? (
-                <>
-                  {/* Vista de todos los eventos */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Resumen General de Todos los Eventos</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid md:grid-cols-3 gap-6 mb-6">
-                        <Card>
-                          <CardContent className="p-6 text-center">
-                            <Users className="w-8 h-8 mx-auto text-blue-600 mb-2" />
-                            <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.invitados}</div>
-                            <div className="text-sm text-gray-600">Total Invitados</div>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardContent className="p-6 text-center">
-                            <UserCheck className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
-                            <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.confirmados}</div>
-                            <div className="text-sm text-gray-600">Total Confirmados</div>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardContent className="p-6 text-center">
-                            <UserPlus className="w-8 h-8 mx-auto text-purple-600 mb-2" />
-                            <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.presentes}</div>
-                            <div className="text-sm text-gray-600">Total Presentes</div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Evento</TableHead>
-                            <TableHead>Invitados</TableHead>
-                            <TableHead>Confirmados</TableHead>
-                            <TableHead>Presentes</TableHead>
-                            <TableHead>% Confirmación</TableHead>
-                            <TableHead>% Asistencia</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {eventos.map((evento) => {
-                            const invitadosEvento = invitados.filter(i => i.event_id === evento.id).length;
-                            const confirmadosEvento = respuestasRSVP.filter(r => 
-                              r.guests?.event_id === evento.id
-                            ).length;
-                            const presentesEvento = asistenciasDB.filter(a => 
-                              a.guests?.event_id === evento.id
-                            ).length;
-                            const porcentajeConfirmacion = invitadosEvento > 0 ? Math.round((confirmadosEvento / invitadosEvento) * 100) : 0;
-                            const porcentajeAsistencia = confirmadosEvento > 0 ? Math.round((presentesEvento / confirmadosEvento) * 100) : 0;
-
-                            return (
-                              <TableRow key={evento.id}>
-                                <TableCell className="font-medium">{evento.name}</TableCell>
-                                <TableCell>{invitadosEvento}</TableCell>
-                                <TableCell>{confirmadosEvento}</TableCell>
-                                <TableCell>{presentesEvento}</TableCell>
-                                <TableCell>{porcentajeConfirmacion}%</TableCell>
-                                <TableCell>{porcentajeAsistencia}%</TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                </>
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-12">
-                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Selecciona un evento para ver los detalles</p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-
-          {/* Registro de asistencias locales - solo si hay datos */}
-          {asistencias.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  Registro de Asistencias (Local)
-                  {filtro && (
-                    <span className="text-sm font-normal text-gray-600 ml-2">
-                      ({asistenciasFiltradas.length} de {asistencias.length} registros)
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-semibold">Nombre</th>
-                        <th className="text-left p-3 font-semibold">Fecha</th>
-                        <th className="text-left p-3 font-semibold">Hora</th>
-                        <th className="text-left p-3 font-semibold">Código</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {asistenciasFiltradas
-                        .sort((a, b) => b.timestamp - a.timestamp)
-                        .map((asistencia, index) => (
-                        <tr key={index} className="border-b hover:bg-gray-50">
-                          <td className="p-3 font-medium">{asistencia.nombre}</td>
-                          <td className="p-3 text-gray-600">{asistencia.fecha}</td>
-                          <td className="p-3 text-gray-600">{asistencia.hora}</td>
-                          <td className="p-3 text-xs text-gray-500 font-mono">
-                            {asistencia.codigo}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Panel de Administración</h1>
+        <div className="space-x-2">
+          <Button onClick={cargarDatos} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Actualizar
+          </Button>
+          <Button onClick={exportarCSV}>
+            <Download className="w-4 h-4 mr-2" />
+            Exportar CSV
+          </Button>
         </div>
       </div>
+
+      {/* Estadísticas Globales Simplificadas */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Calendar className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+            <div className="text-2xl font-bold">{estadisticasGlobales.totalEventos}</div>
+            <div className="text-sm text-gray-600">Eventos</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Users className="w-6 h-6 mx-auto mb-2 text-green-600" />
+            <div className="text-2xl font-bold">{estadisticasGlobales.totalInvitados}</div>
+            <div className="text-sm text-gray-600">Invitados</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <UserCheck className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+            <div className="text-2xl font-bold">{estadisticasGlobales.totalAdultos}</div>
+            <div className="text-sm text-gray-600">Adultos</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Baby className="w-6 h-6 mx-auto mb-2 text-yellow-600" />
+            <div className="text-2xl font-bold">{estadisticasGlobales.totalNiños}</div>
+            <div className="text-sm text-gray-600">Niños</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Heart className="w-6 h-6 mx-auto mb-2 text-red-600" />
+            <div className="text-2xl font-bold">{estadisticasGlobales.totalMascotas}</div>
+            <div className="text-sm text-gray-600">Mascotas</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <CheckCircle className="w-6 h-6 mx-auto mb-2 text-green-500" />
+            <div className="text-2xl font-bold">{estadisticasGlobales.totalAsistencias}</div>
+            <div className="text-sm text-gray-600">Presentes</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lista de Eventos con Estadísticas Resumidas */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Calendar className="w-5 h-5 mr-2" />
+            Eventos y Asistencia
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {eventos.map((evento) => {
+              const stats = getEstadisticasEvento(evento);
+              const porcentajeAsistencia = stats.totalInvitados > 0 
+                ? Math.round((stats.totalPresentes / stats.totalInvitados) * 100) 
+                : 0;
+
+              return (
+                <div key={evento.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-semibold text-lg">{evento.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        {new Date(evento.start_date || evento.date).toLocaleDateString('es-ES')}
+                      </p>
+                    </div>
+                    <Badge variant={evento.status === 'active' ? 'default' : 'secondary'}>
+                      {evento.status}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Confirmados */}
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <h4 className="font-medium text-blue-800 mb-2">Confirmados</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Adultos:</span>
+                          <span className="font-semibold">{stats.confirmados.adultos}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Niños:</span>
+                          <span className="font-semibold">{stats.confirmados.niños}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Mascotas:</span>
+                          <span className="font-semibold">{stats.confirmados.mascotas}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Presentes */}
+                    <div className="bg-green-50 rounded-lg p-3">
+                      <h4 className="font-medium text-green-800 mb-2">Presentes</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Adultos:</span>
+                          <span className="font-semibold">{stats.presentes.adultos}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Niños:</span>
+                          <span className="font-semibold">{stats.presentes.niños}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Mascotas:</span>
+                          <span className="font-semibold">{stats.presentes.mascotas}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Resumen */}
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <h4 className="font-medium text-gray-800 mb-2">Resumen</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Invitados:</span>
+                          <span className="font-semibold">{stats.totalInvitados}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Asistencia:</span>
+                          <span className="font-semibold">{porcentajeAsistencia}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex flex-col space-y-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => navigate(`/evento/${evento.id}`)}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Ver
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => navigate(`/editar-evento/${evento.id}`)}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Editar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

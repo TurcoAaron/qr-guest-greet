@@ -82,7 +82,14 @@ const VisualizarInvitacion = () => {
       }
 
       setInvitado(invitadoData);
-      setEvento(invitadoData.events);
+      
+      // Asegurar que tenemos una fecha válida para la cuenta regresiva
+      const eventoConFecha = {
+        ...invitadoData.events,
+        start_date: invitadoData.events.start_date || invitadoData.events.date
+      };
+      
+      setEvento(eventoConFecha);
     } catch (error) {
       console.error('Error cargando invitación:', error);
       toast({

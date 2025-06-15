@@ -49,10 +49,16 @@ export const TemplateRenderer = ({
 
   const TemplateComponent = templates[templateId as keyof typeof templates] || ModernTemplate;
 
+  // Asegurar que la fecha esté en formato correcto para la cuenta regresiva
+  const eventoConFechaCorrecta = {
+    ...evento,
+    start_date: evento.start_date || evento.date || new Date().toISOString()
+  };
+
   return (
     <TemplateComponent 
       invitado={invitado} 
-      evento={evento} 
+      evento={eventoConFechaCorrecta} 
       showRSVP={showRSVP}
       maxPasses={maxPasses}
       defaultAdults={defaultAdults}
