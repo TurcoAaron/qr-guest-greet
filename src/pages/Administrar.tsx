@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +22,6 @@ import {
   Edit,
   CheckCircle,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 interface Evento {
@@ -60,7 +60,6 @@ const Administrar = () => {
   const [invitados, setInvitados] = useState<Invitado[]>([]);
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [loadingEventos, setLoadingEventos] = useState(true);
-  const [filtro, setFiltro] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -81,7 +80,13 @@ const Administrar = () => {
         .select('*');
 
       if (invitadosError) throw invitadosError;
-      setInvitados(invitadosData || []);
+      setInvitados((invitadosData || []).map(inv => ({
+        id: inv.id,
+        event_id: inv.event_id,
+        adults_count: inv.adults_count || 0,
+        children_count: inv.children_count || 0,
+        pets_count: (inv as any).pets_count || 0,
+      })));
 
       // Cargar asistencias
       const { data: asistenciasData, error: asistenciasError } = await supabase
@@ -93,7 +98,20 @@ const Administrar = () => {
         `);
 
       if (asistenciasError) throw asistenciasError;
-      setAsistencias(asistenciasData || []);
+      setAsistencias((asistenciasData || []).map(a => ({
+        id: a.id,
+        guest_id: a.guest_id,
+        event_id: a.event_id,
+        actual_adults_count: (a as any).actual_adults_count || null,
+        actual_children_count: (a as any).actual_children_count || null,
+        actual_pets_count: (a as any).actual_pets_count || null,
+        guests: {
+          name: a.guests?.name || "Invitado Desconocido",
+          adults_count: a.guests?.adults_count || 0,
+          children_count: a.guests?.children_count || 0,
+          pets_count: (a.guests as any)?.pets_count || 0,
+        }
+      })));
 
     } catch (error) {
       console.error('Error cargando datos:', error);
@@ -111,72 +129,6 @@ const Administrar = () => {
     cargarDatos();
   }, []);
 
-  const procesarAsistencias = () => {
-    return asistencias.map((asistencia) => {
-      const invitado = invitados.find((invitado) => invitado.id === asistencia.guest_id);
-      const evento = eventos.find((evento) => evento.id === asistencia.event_id);
-
-      return {
-        id: asistencia.id,
-        nombre: asistencia.guests?.name || "Invitado Desconocido",
-        evento: evento?.name || "Evento Desconocido",
-        fecha: evento?.date || evento?.start_date || "Fecha Desconocida",
-        adultosConfirmados: invitado?.adults_count || 0,
-        niñosConfirmados: invitado?.children_count || 0,
-        mascotasConfirmadas: (invitado as any)?.pets_count || 0,
-        adultosPresentes: asistencia.actual_adults_count !== null ? asistencia.actual_adults_count : asistencia.guests?.adults_count || 0,
-        niñosPresentes: asistencia.actual_children_count !== null ? asistencia.actual_children_count : asistencia.guests?.children_count || 0,
-        mascotasPresentes: asistencia.actual_pets_count !== null ? asistencia.actual_pets_count : (asistencia.guests as any)?.pets_count || 0,
-      };
-    });
-  };
-
-  const exportarCSV = () => {
-    const data = asistencias.map((asistencia) => {
-      const invitado = invitados.find((invitado) => invitado.id === asistencia.guest_id);
-      const evento = eventos.find((evento) => evento.id === asistencia.event_id);
-
-      return {
-        Nombre: asistencia.guests?.name || "Invitado Desconocido",
-        Evento: evento?.name || "Evento Desconocido",
-        Fecha: evento?.date || evento?.start_date || "Fecha Desconocida",
-        AdultosConfirmados: invitado?.adults_count || 0,
-        NiñosConfirmados: invitado?.children_count || 0,
-        MascotasConfirmadas: (invitado as any)?.pets_count || 0,
-        AdultosPresentes: asistencia.actual_adults_count !== null ? asistencia.actual_adults_count : asistencia.guests?.adults_count || 0,
-        NiñosPresentes: asistencia.actual_children_count !== null ? asistencia.actual_children_count : asistencia.guests?.children_count || 0,
-        MascotasPresentes: asistencia.actual_pets_count !== null ? asistencia.actual_pets_count : (asistencia.guests as any)?.pets_count || 0,
-      };
-    });
-
-    const csvRows = [];
-    const headers = Object.keys(data[0]);
-    csvRows.push(headers.join(','));
-
-    for (const row of data) {
-      const values = headers.map(header => {
-        const escaped = ('' + row[header]).replace(/"/g, '""');
-        return `"${escaped}"`;
-      });
-      csvRows.push(values.join(','));
-    }
-
-    const csvData = csvRows.join('\n');
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'asistencias.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
-  const asistenciasProcesadas = procesarAsistencias();
-  const asistenciasFiltradas = asistenciasProcesadas.filter(asistencia =>
-    filtro === "" || asistencia.nombre.toLowerCase().includes(filtro.toLowerCase())
-  );
-
   // Estadísticas globales simplificadas
   const estadisticasGlobales = {
     totalEventos: eventos.length,
@@ -184,7 +136,7 @@ const Administrar = () => {
     totalAsistencias: asistencias.length,
     totalAdultos: invitados.reduce((total, inv) => total + (inv.adults_count || 0), 0),
     totalNiños: invitados.reduce((total, inv) => total + (inv.children_count || 0), 0),
-    totalMascotas: invitados.reduce((total, inv) => total + ((inv as any).pets_count || 0), 0),
+    totalMascotas: invitados.reduce((total, inv) => total + (inv.pets_count || 0), 0),
   };
 
   // Estadísticas por evento
@@ -196,12 +148,12 @@ const Administrar = () => {
       confirmados: {
         adultos: invitadosEvento.reduce((total, inv) => total + (inv.adults_count || 0), 0),
         niños: invitadosEvento.reduce((total, inv) => total + (inv.children_count || 0), 0),
-        mascotas: invitadosEvento.reduce((total, inv) => total + ((inv as any).pets_count || 0), 0),
+        mascotas: invitadosEvento.reduce((total, inv) => total + (inv.pets_count || 0), 0),
       },
       presentes: {
-        adultos: asistenciasEvento.reduce((total, a) => total + (a.actual_adults_count || (a.guests as any)?.adults_count || 0), 0),
-        niños: asistenciasEvento.reduce((total, a) => total + (a.actual_children_count || (a.guests as any)?.children_count || 0), 0),
-        mascotas: asistenciasEvento.reduce((total, a) => total + (a.actual_pets_count || (a.guests as any)?.pets_count || 0), 0),
+        adultos: asistenciasEvento.reduce((total, a) => total + (a.actual_adults_count || a.guests?.adults_count || 0), 0),
+        niños: asistenciasEvento.reduce((total, a) => total + (a.actual_children_count || a.guests?.children_count || 0), 0),
+        mascotas: asistenciasEvento.reduce((total, a) => total + (a.actual_pets_count || a.guests?.pets_count || 0), 0),
       },
       totalInvitados: invitadosEvento.length,
       totalPresentes: asistenciasEvento.length,
@@ -225,14 +177,10 @@ const Administrar = () => {
             <RefreshCw className="w-4 h-4 mr-2" />
             Actualizar
           </Button>
-          <Button onClick={exportarCSV}>
-            <Download className="w-4 h-4 mr-2" />
-            Exportar CSV
-          </Button>
         </div>
       </div>
 
-      {/* Estadísticas Globales Simplificadas */}
+      {/* Estadísticas Globales */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
         <Card>
           <CardContent className="p-4 text-center">

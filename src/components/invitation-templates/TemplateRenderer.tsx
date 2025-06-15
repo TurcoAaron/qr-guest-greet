@@ -52,7 +52,7 @@ export const TemplateRenderer = ({
   // Asegurar que la fecha esté en formato correcto para la cuenta regresiva
   const eventoConFechaCorrecta = {
     ...evento,
-    start_date: evento.start_date || evento.date || new Date().toISOString()
+    start_date: evento.start_date || new Date().toISOString()
   };
 
   return (
