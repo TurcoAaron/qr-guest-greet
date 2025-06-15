@@ -28,6 +28,7 @@ interface TemplateRendererProps {
   maxPasses?: number;
   defaultAdults?: number;
   defaultChildren?: number;
+  defaultPets?: number;
 }
 
 export const TemplateRenderer = ({ 
@@ -37,7 +38,8 @@ export const TemplateRenderer = ({
   showRSVP = false,
   maxPasses,
   defaultAdults,
-  defaultChildren
+  defaultChildren,
+  defaultPets = 0
 }: TemplateRendererProps) => {
   const templates = {
     modern: ModernTemplate,
@@ -63,6 +65,7 @@ export const TemplateRenderer = ({
       maxPasses={maxPasses}
       defaultAdults={defaultAdults}
       defaultChildren={defaultChildren}
+      defaultPets={defaultPets}
     />
   );
 };

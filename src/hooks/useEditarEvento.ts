@@ -39,6 +39,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
   const [images, setImages] = useState<EventImage[]>([]);
   const [invitados, setInvitados] = useState<Invitado[]>([]);
   const [validateFullAttendance, setValidateFullAttendance] = useState(false);
+  const [codigoEvento, setCodigoEvento] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
         setCodigoVestimenta(eventoData.dress_code || "");
         setTemplateId(eventoData.template_id || "modern");
         setValidateFullAttendance(eventoData.validate_full_attendance || false);
+        setCodigoEvento(eventoData.event_code || "");
       }
 
       // Cargar imágenes del evento
@@ -147,6 +149,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
           dress_code: codigoVestimenta,
           template_id: templateId,
           validate_full_attendance: validateFullAttendance,
+          event_code: codigoEvento,
           updated_at: new Date().toISOString(),
         })
         .eq('id', eventoId);
@@ -244,6 +247,8 @@ export const useEditarEvento = (eventoId: string | undefined) => {
     setInvitados,
     validateFullAttendance,
     setValidateFullAttendance,
+    codigoEvento,
+    setCodigoEvento,
     guardarCambios
   };
 };

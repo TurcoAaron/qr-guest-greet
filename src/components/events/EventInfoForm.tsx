@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CalendarDays, MapPin, Clock, Palette, Image as ImageIcon, Shield } from "lucide-react";
+import { CalendarDays, MapPin, Clock, Palette, Image as ImageIcon, Shield, Hash } from "lucide-react";
 import { TemplateSelector } from "../invitation-templates/TemplateSelector";
 import { ImageUploader } from "./ImageUploader";
 import type { EventImage } from "@/types/event";
@@ -33,6 +33,8 @@ interface EventInfoFormProps {
   setImages: (value: EventImage[]) => void;
   validateFullAttendance: boolean;
   setValidateFullAttendance: (value: boolean) => void;
+  codigoEvento?: string;
+  setCodigoEvento?: (value: string) => void;
   evento?: any;
   loading: boolean;
 }
@@ -60,6 +62,8 @@ export const EventInfoForm = ({
   setImages,
   validateFullAttendance,
   setValidateFullAttendance,
+  codigoEvento,
+  setCodigoEvento,
   evento,
   loading
 }: EventInfoFormProps) => {
@@ -112,6 +116,27 @@ export const EventInfoForm = ({
               rows={3}
             />
           </div>
+
+          {/* Código del evento personalizable */}
+          {setCodigoEvento && (
+            <div className="space-y-2">
+              <Label htmlFor="codigoEvento" className="flex items-center space-x-2">
+                <Hash className="w-4 h-4" />
+                <span>Código del Evento</span>
+              </Label>
+              <Input
+                id="codigoEvento"
+                type="text"
+                placeholder="Ej: BODA2024-MJ"
+                value={codigoEvento}
+                onChange={(e) => setCodigoEvento(e.target.value)}
+                className="font-mono"
+              />
+              <p className="text-xs text-gray-500">
+                Este código se usará para identificar el evento de forma única
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

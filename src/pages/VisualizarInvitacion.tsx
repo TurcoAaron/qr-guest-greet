@@ -16,6 +16,7 @@ interface Invitado {
   passes_count: number;
   adults_count: number;
   children_count: number;
+  pets_count: number;
 }
 
 interface Evento {
@@ -81,7 +82,13 @@ const VisualizarInvitacion = () => {
         return;
       }
 
-      setInvitado(invitadoData);
+      // Asegurar que pets_count esté disponible
+      const invitadoConMascotas = {
+        ...invitadoData,
+        pets_count: invitadoData.pets_count || 0
+      };
+
+      setInvitado(invitadoConMascotas);
       
       // Asegurar que tenemos una fecha válida para la cuenta regresiva
       const eventoConFecha = {
@@ -144,6 +151,7 @@ const VisualizarInvitacion = () => {
         maxPasses={invitado.passes_count}
         defaultAdults={invitado.adults_count}
         defaultChildren={invitado.children_count}
+        defaultPets={invitado.pets_count}
       />
     </div>
   );

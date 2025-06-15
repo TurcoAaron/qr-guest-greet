@@ -13,14 +13,10 @@ import { Button } from "@/components/ui/button";
 import {
   Calendar,
   Users,
-  UserCheck,
-  Baby,
-  Heart,
+  CheckCircle,
   RefreshCw,
-  Download,
   Eye,
   Edit,
-  CheckCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -134,9 +130,6 @@ const Administrar = () => {
     totalEventos: eventos.length,
     totalInvitados: invitados.length,
     totalAsistencias: asistencias.length,
-    totalAdultos: invitados.reduce((total, inv) => total + (inv.adults_count || 0), 0),
-    totalNiños: invitados.reduce((total, inv) => total + (inv.children_count || 0), 0),
-    totalMascotas: invitados.reduce((total, inv) => total + (inv.pets_count || 0), 0),
   };
 
   // Estadísticas por evento
@@ -180,53 +173,29 @@ const Administrar = () => {
         </div>
       </div>
 
-      {/* Estadísticas Globales */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+      {/* Estadísticas Globales Simplificadas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card>
-          <CardContent className="p-4 text-center">
-            <Calendar className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-            <div className="text-2xl font-bold">{estadisticasGlobales.totalEventos}</div>
-            <div className="text-sm text-gray-600">Eventos</div>
+          <CardContent className="p-6 text-center">
+            <Calendar className="w-8 h-8 mx-auto mb-3 text-blue-600" />
+            <div className="text-3xl font-bold text-blue-600">{estadisticasGlobales.totalEventos}</div>
+            <div className="text-sm text-gray-600">Eventos Totales</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4 text-center">
-            <Users className="w-6 h-6 mx-auto mb-2 text-green-600" />
-            <div className="text-2xl font-bold">{estadisticasGlobales.totalInvitados}</div>
-            <div className="text-sm text-gray-600">Invitados</div>
+          <CardContent className="p-6 text-center">
+            <Users className="w-8 h-8 mx-auto mb-3 text-green-600" />
+            <div className="text-3xl font-bold text-green-600">{estadisticasGlobales.totalInvitados}</div>
+            <div className="text-sm text-gray-600">Invitados Totales</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4 text-center">
-            <UserCheck className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-            <div className="text-2xl font-bold">{estadisticasGlobales.totalAdultos}</div>
-            <div className="text-sm text-gray-600">Adultos</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Baby className="w-6 h-6 mx-auto mb-2 text-yellow-600" />
-            <div className="text-2xl font-bold">{estadisticasGlobales.totalNiños}</div>
-            <div className="text-sm text-gray-600">Niños</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Heart className="w-6 h-6 mx-auto mb-2 text-red-600" />
-            <div className="text-2xl font-bold">{estadisticasGlobales.totalMascotas}</div>
-            <div className="text-sm text-gray-600">Mascotas</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <CheckCircle className="w-6 h-6 mx-auto mb-2 text-green-500" />
-            <div className="text-2xl font-bold">{estadisticasGlobales.totalAsistencias}</div>
-            <div className="text-sm text-gray-600">Presentes</div>
+          <CardContent className="p-6 text-center">
+            <CheckCircle className="w-8 h-8 mx-auto mb-3 text-purple-600" />
+            <div className="text-3xl font-bold text-purple-600">{estadisticasGlobales.totalAsistencias}</div>
+            <div className="text-sm text-gray-600">Asistencias Confirmadas</div>
           </CardContent>
         </Card>
       </div>

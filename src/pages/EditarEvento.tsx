@@ -39,6 +39,8 @@ const EditarEvento = () => {
     setInvitados,
     validateFullAttendance,
     setValidateFullAttendance,
+    codigoEvento,
+    setCodigoEvento,
     guardarCambios
   } = useEditarEvento(eventoId);
 
@@ -82,6 +84,8 @@ const EditarEvento = () => {
             setImages={setImages}
             validateFullAttendance={validateFullAttendance}
             setValidateFullAttendance={setValidateFullAttendance}
+            codigoEvento={codigoEvento}
+            setCodigoEvento={setCodigoEvento}
             evento={evento}
             loading={loading}
           />

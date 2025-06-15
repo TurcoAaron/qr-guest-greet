@@ -29,6 +29,7 @@ interface ModernTemplateProps {
   maxPasses?: number;
   defaultAdults?: number;
   defaultChildren?: number;
+  defaultPets?: number;
 }
 
 export const ModernTemplate = ({ 
@@ -37,7 +38,8 @@ export const ModernTemplate = ({
   showRSVP = false,
   maxPasses,
   defaultAdults,
-  defaultChildren
+  defaultChildren,
+  defaultPets = 0
 }: ModernTemplateProps) => {
   const formatDate = (dateString: string) => {
     try {
@@ -175,6 +177,7 @@ export const ModernTemplate = ({
               maxPasses={maxPasses}
               defaultAdults={defaultAdults}
               defaultChildren={defaultChildren}
+              defaultPets={defaultPets}
             />
           </div>
         )}
