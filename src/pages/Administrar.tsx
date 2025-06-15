@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Download, Trash2, Search, Calendar, UserCheck, UserPlus, Filter } from "lucide-react";
+import { Users, Download, Trash2, Search, Calendar, UserCheck, UserPlus, Filter, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,7 @@ const Administrar = () => {
   const [invitados, setInvitados] = useState<any[]>([]);
   const [asistenciasDB, setAsistenciasDB] = useState<any[]>([]);
   const [respuestasRSVP, setRespuestasRSVP] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,7 +35,17 @@ const Administrar = () => {
     cargarDatosSupabase();
   }, []);
 
+  // Auto-refresh cada 30 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      cargarDatosSupabase();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const cargarDatosSupabase = async () => {
+    setLoading(true);
     try {
       // Cargar eventos
       const { data: eventosData } = await supabase
@@ -44,9 +55,6 @@ const Administrar = () => {
       
       if (eventosData) {
         setEventos(eventosData);
-        if (eventosData.length > 0 && eventoSeleccionado === "todos") {
-          // Keep "todos" as default
-        }
       }
 
       // Cargar invitados
@@ -58,16 +66,18 @@ const Administrar = () => {
         setInvitados(invitadosData);
       }
 
-      // Cargar asistencias
+      // Cargar asistencias con mejor query
       const { data: asistenciasData } = await supabase
         .from('attendances')
         .select(`
           *,
-          guests (name, email, event_id),
-          events (name)
-        `);
+          guests!inner (id, name, email, event_id),
+          events!inner (id, name)
+        `)
+        .order('checked_in_at', { ascending: false });
       
       if (asistenciasData) {
+        console.log('Asistencias cargadas:', asistenciasData);
         setAsistenciasDB(asistenciasData);
       }
 
@@ -76,16 +86,32 @@ const Administrar = () => {
         .from('rsvp_responses')
         .select(`
           *,
-          guests (name, email, event_id),
-          events (name)
-        `);
+          guests!inner (id, name, email, event_id),
+          events!inner (id, name)
+        `)
+        .eq('response', 'attending');
       
       if (rsvpData) {
         setRespuestasRSVP(rsvpData);
       }
     } catch (error) {
       console.error('Error cargando datos:', error);
+      toast({
+        title: "Error",
+        description: "Error al cargar los datos",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const refrescarDatos = () => {
+    cargarDatosSupabase();
+    toast({
+      title: "Datos Actualizados",
+      description: "La información se ha actualizado correctamente",
+    });
   };
 
   const procesarAsistencias = () => {
@@ -152,7 +178,7 @@ const Administrar = () => {
   const estadisticasGenerales = {
     totalEventos: eventos.length,
     eventosActivos: eventos.filter(e => e.status === 'active').length,
-    totalConfirmados: respuestasRSVP.filter(r => r.response === 'attending').length,
+    totalConfirmados: respuestasRSVP.length,
     totalPresentes: asistenciasDB.length,
     totalAsistenciasLocal: asistencias.length,
   };
@@ -160,7 +186,7 @@ const Administrar = () => {
   // Estadísticas por evento seleccionado
   const eventoActual = eventos.find(e => e.id === eventoSeleccionado);
   const confirmadosEvento = respuestasRSVP.filter(r => 
-    eventoSeleccionado === "todos" ? true : r.response === 'attending' && r.guests?.event_id === eventoSeleccionado
+    eventoSeleccionado === "todos" ? true : r.guests?.event_id === eventoSeleccionado
   );
   const presentesEvento = asistenciasDB.filter(a => 
     eventoSeleccionado === "todos" ? true : a.guests?.event_id === eventoSeleccionado
@@ -192,9 +218,20 @@ const Administrar = () => {
           {/* Filtros principales */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Filter className="w-5 h-5" />
-                <span>Filtros y Controles</span>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Filter className="w-5 h-5" />
+                  <span>Filtros y Controles</span>
+                </div>
+                <Button
+                  onClick={refrescarDatos}
+                  variant="outline"
+                  size="sm"
+                  disabled={loading}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Actualizar
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -301,6 +338,46 @@ const Administrar = () => {
                 </Card>
               </div>
 
+              {/* Todas las asistencias registradas */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Todas las Asistencias Registradas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {asistenciasDB.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No hay asistencias registradas
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Evento</TableHead>
+                          <TableHead>Hora de Llegada</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {asistenciasDB
+                          .filter(asistencia => 
+                            filtro === "" || 
+                            asistencia.guests?.name?.toLowerCase().includes(filtro.toLowerCase())
+                          )
+                          .map((asistencia) => (
+                          <TableRow key={asistencia.id}>
+                            <TableCell className="font-medium">{asistencia.guests?.name || 'N/A'}</TableCell>
+                            <TableCell>{asistencia.guests?.email || 'N/A'}</TableCell>
+                            <TableCell>{asistencia.events?.name || 'N/A'}</TableCell>
+                            <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Resumen por eventos */}
               <Card>
                 <CardHeader>
@@ -322,7 +399,7 @@ const Administrar = () => {
                       {eventos.map((evento) => {
                         const invitadosEvento = invitados.filter(i => i.event_id === evento.id).length;
                         const confirmadosEvento = respuestasRSVP.filter(r => 
-                          r.response === 'attending' && r.guests?.event_id === evento.id
+                          r.guests?.event_id === evento.id
                         ).length;
                         const presentesEvento = asistenciasDB.filter(a => 
                           a.guests?.event_id === evento.id
@@ -403,6 +480,45 @@ const Administrar = () => {
                     </Card>
                   </div>
 
+                  {/* Presentes del evento */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Asistencias del Evento</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {presentesEvento.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          No hay asistencias registradas para este evento
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nombre</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Hora de Llegada</TableHead>
+                              <TableHead>Estado</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {presentesEvento.map((asistencia) => (
+                              <TableRow key={asistencia.id}>
+                                <TableCell className="font-medium">{asistencia.guests?.name}</TableCell>
+                                <TableCell>{asistencia.guests?.email}</TableCell>
+                                <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
+                                <TableCell>
+                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Presente
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  </Card>
+
                   {/* Confirmados del evento */}
                   <Card>
                     <CardHeader>
@@ -441,39 +557,6 @@ const Administrar = () => {
                                 </TableRow>
                               );
                             })}
-                          </TableBody>
-                        </Table>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Presentes del evento */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Presentes en el Evento</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {presentesEvento.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          No hay asistencias registradas para este evento
-                        </div>
-                      ) : (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Nombre</TableHead>
-                              <TableHead>Email</TableHead>
-                              <TableHead>Hora de Llegada</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {presentesEvento.map((asistencia) => (
-                              <TableRow key={asistencia.id}>
-                                <TableCell className="font-medium">{asistencia.guests?.name}</TableCell>
-                                <TableCell>{asistencia.guests?.email}</TableCell>
-                                <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
-                              </TableRow>
-                            ))}
                           </TableBody>
                         </Table>
                       )}
@@ -529,7 +612,7 @@ const Administrar = () => {
                           {eventos.map((evento) => {
                             const invitadosEvento = invitados.filter(i => i.event_id === evento.id).length;
                             const confirmadosEvento = respuestasRSVP.filter(r => 
-                              r.response === 'attending' && r.guests?.event_id === evento.id
+                              r.guests?.event_id === evento.id
                             ).length;
                             const presentesEvento = asistenciasDB.filter(a => 
                               a.guests?.event_id === evento.id
