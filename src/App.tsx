@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Invitacion from "./pages/Invitacion";
+import VisualizarInvitacion from "./pages/VisualizarInvitacion";
 import TomarAsistencia from "./pages/TomarAsistencia";
 import GenerarQR from "./pages/GenerarQR";
 import EscanearQR from "./pages/EscanearQR";
@@ -40,6 +41,7 @@ const App = () => (
               } 
             />
             <Route path="/invitacion" element={<Layout><Invitacion /></Layout>} />
+            <Route path="/visualizar-invitacion" element={<VisualizarInvitacion />} />
             <Route path="/tomar-asistencia/:eventoId" element={<Layout><TomarAsistencia /></Layout>} />
             <Route 
               path="/crear-evento" 
