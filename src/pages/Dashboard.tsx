@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { LogOut, Plus, Calendar, Users, MapPin, Edit } from 'lucide-react';
+import { LogOut, Plus, Calendar, Users, MapPin, Edit, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Event {
@@ -15,9 +16,13 @@ interface Event {
   name: string;
   description: string;
   date: string;
+  start_date: string;
+  end_date: string;
   location: string;
   event_code: string;
   status: 'upcoming' | 'active' | 'completed' | 'cancelled';
+  event_type: string;
+  dress_code: string;
   created_at: string;
 }
 
@@ -39,7 +44,7 @@ const Dashboard = () => {
         .from('events')
         .select('*')
         .eq('organizer_id', user.id)
-        .order('date', { ascending: true });
+        .order('start_date', { ascending: true });
       
       if (error) throw error;
       return data as Event[];
@@ -73,6 +78,21 @@ const Dashboard = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
+  const formatearTipoEvento = (tipo: string) => {
+    if (!tipo) return '';
+    const tipos = {
+      conference: "Conferencia",
+      wedding: "Boda", 
+      birthday: "Cumpleaños",
+      corporate: "Corporativo",
+      social: "Social",
+      workshop: "Taller",
+      seminar: "Seminario",
+      other: "Otro"
+    };
+    return tipos[tipo as keyof typeof tipos] || tipo;
+  };
+
   const EventCard = ({ event }: { event: Event }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
@@ -80,6 +100,11 @@ const Dashboard = () => {
           <div>
             <CardTitle className="text-lg">{event.name}</CardTitle>
             <CardDescription className="mt-1">{event.description}</CardDescription>
+            {event.event_type && (
+              <Badge variant="outline" className="mt-2">
+                {formatearTipoEvento(event.event_type)}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center space-x-2">
             {getStatusBadge(event.status)}
@@ -98,12 +123,37 @@ const Dashboard = () => {
         <div className="space-y-2 text-sm text-gray-600">
           <div className="flex items-center space-x-2">
             <Calendar className="w-4 h-4" />
-            <span>{new Date(event.date).toLocaleDateString()}</span>
+            <span>
+              {new Date(event.start_date || event.date).toLocaleDateString('es-ES', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+              })}
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Clock className="w-4 h-4" />
+            <span>
+              {new Date(event.start_date || event.date).toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+              {event.end_date && ` - ${new Date(event.end_date).toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}`}
+            </span>
           </div>
           {event.location && (
             <div className="flex items-center space-x-2">
               <MapPin className="w-4 h-4" />
               <span>{event.location}</span>
+            </div>
+          )}
+          {event.dress_code && (
+            <div className="flex items-center space-x-2">
+              <span className="w-4 h-4 text-center">👔</span>
+              <span>Vestimenta: {event.dress_code}</span>
             </div>
           )}
           <div className="flex items-center space-x-2">

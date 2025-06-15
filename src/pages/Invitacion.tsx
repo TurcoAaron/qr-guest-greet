@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Download, ArrowLeft, XCircle } from "lucide-react";
+import { Calendar, MapPin, Clock, Download, ArrowLeft, XCircle, Check, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,7 @@ interface Invitado {
   id: string;
   name: string;
   email: string;
+  phone: string;
   invitation_code: string;
   qr_code_data: string;
 }
@@ -21,7 +22,16 @@ interface Evento {
   name: string;
   description: string;
   date: string;
+  start_date: string;
+  end_date: string;
   location: string;
+  event_type: string;
+  dress_code: string;
+}
+
+interface RsvpResponse {
+  id: string;
+  response: string;
 }
 
 const Invitacion = () => {
@@ -30,14 +40,15 @@ const Invitacion = () => {
   const { toast } = useToast();
   const [invitado, setInvitado] = useState<Invitado | null>(null);
   const [evento, setEvento] = useState<Evento | null>(null);
+  const [rsvpResponse, setRsvpResponse] = useState<RsvpResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
   useEffect(() => {
     const codigo = searchParams.get("codigo");
     if (codigo) {
       cargarInvitacion(codigo);
     } else {
-      // Si no hay código, mostrar error
       setLoading(false);
     }
   }, [searchParams]);
@@ -54,7 +65,11 @@ const Invitacion = () => {
             name,
             description,
             date,
-            location
+            start_date,
+            end_date,
+            location,
+            event_type,
+            dress_code
           )
         `)
         .eq('invitation_code', codigo)
@@ -71,6 +86,18 @@ const Invitacion = () => {
 
       setInvitado(invitadoData);
       setEvento(invitadoData.events);
+
+      // Cargar respuesta RSVP existente
+      const { data: rsvpData } = await supabase
+        .from('rsvp_responses')
+        .select('*')
+        .eq('guest_id', invitadoData.id)
+        .eq('event_id', invitadoData.events.id)
+        .single();
+
+      if (rsvpData) {
+        setRsvpResponse(rsvpData);
+      }
     } catch (error) {
       console.error('Error cargando invitación:', error);
       toast({
@@ -83,11 +110,93 @@ const Invitacion = () => {
     }
   };
 
+  const responderInvitacion = async (response: 'attending' | 'not_attending') => {
+    if (!invitado || !evento) return;
+
+    setSubmittingRsvp(true);
+
+    try {
+      if (rsvpResponse) {
+        // Actualizar respuesta existente
+        const { error } = await supabase
+          .from('rsvp_responses')
+          .update({ 
+            response,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', rsvpResponse.id);
+
+        if (error) throw error;
+
+        setRsvpResponse({ ...rsvpResponse, response });
+      } else {
+        // Crear nueva respuesta
+        const { data, error } = await supabase
+          .from('rsvp_responses')
+          .insert({
+            guest_id: invitado.id,
+            event_id: evento.id,
+            response
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setRsvpResponse(data);
+      }
+
+      toast({
+        title: response === 'attending' ? "¡Confirmado!" : "Respuesta registrada",
+        description: response === 'attending' 
+          ? "Tu asistencia ha sido confirmada" 
+          : "Hemos registrado que no podrás asistir",
+      });
+    } catch (error) {
+      console.error('Error enviando respuesta:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo registrar tu respuesta. Intenta nuevamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmittingRsvp(false);
+    }
+  };
+
   const descargarInvitacion = () => {
     toast({
       title: "Función en desarrollo",
       description: "La descarga de invitaciones estará disponible pronto",
     });
+  };
+
+  const formatearTipoEvento = (tipo: string) => {
+    const tipos = {
+      conference: "Conferencia",
+      wedding: "Boda", 
+      birthday: "Cumpleaños",
+      corporate: "Corporativo",
+      social: "Social",
+      workshop: "Taller",
+      seminar: "Seminario",
+      other: "Otro"
+    };
+    return tipos[tipo as keyof typeof tipos] || tipo;
+  };
+
+  const formatearCodigoVestimenta = (codigo: string) => {
+    const codigos = {
+      formal: "Formal",
+      "semi-formal": "Semi-formal",
+      casual: "Casual",
+      business: "Ejecutivo",
+      cocktail: "Cocktail",
+      "black-tie": "Etiqueta",
+      "white-tie": "Etiqueta Rigurosa",
+      theme: "Temático"
+    };
+    return codigos[codigo as keyof typeof codigos] || codigo;
   };
 
   if (loading) {
@@ -175,7 +284,7 @@ const Invitacion = () => {
                   <div>
                     <p className="font-semibold text-gray-800">Fecha</p>
                     <p className="text-gray-600">
-                      {new Date(evento.date).toLocaleDateString('es-ES', {
+                      {new Date(evento.start_date).toLocaleDateString('es-ES', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -190,10 +299,14 @@ const Invitacion = () => {
                   <div>
                     <p className="font-semibold text-gray-800">Hora</p>
                     <p className="text-gray-600">
-                      {new Date(evento.date).toLocaleTimeString('es-ES', {
+                      {new Date(evento.start_date).toLocaleTimeString('es-ES', {
                         hour: '2-digit',
                         minute: '2-digit'
                       })} hrs
+                      {evento.end_date && ` - ${new Date(evento.end_date).toLocaleTimeString('es-ES', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })} hrs`}
                     </p>
                   </div>
                 </div>
@@ -207,6 +320,92 @@ const Invitacion = () => {
                     </div>
                   </div>
                 )}
+
+                {evento.event_type && (
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="font-semibold text-gray-800">Tipo de Evento</p>
+                      <p className="text-gray-600">{formatearTipoEvento(evento.event_type)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {evento.dress_code && (
+                  <div className="flex items-center space-x-3">
+                    <span className="w-5 h-5 text-purple-600 text-lg">👔</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Código de Vestimenta</p>
+                      <p className="text-gray-600">{formatearCodigoVestimenta(evento.dress_code)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Botones de RSVP */}
+              <div className="bg-white p-6 rounded-lg border-2 border-dashed border-purple-300">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                  ¿Podrás acompañarnos?
+                </h3>
+                
+                {rsvpResponse ? (
+                  <div className="text-center space-y-4">
+                    <div className="flex items-center justify-center space-x-2">
+                      {rsvpResponse.response === 'attending' ? (
+                        <>
+                          <Check className="w-5 h-5 text-green-600" />
+                          <span className="text-green-600 font-medium">Confirmaste tu asistencia</span>
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-5 h-5 text-red-600" />
+                          <span className="text-red-600 font-medium">Confirmaste que no podrás asistir</span>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">¿Quieres cambiar tu respuesta?</p>
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-600 mb-4">
+                    Por favor confirma tu asistencia
+                  </p>
+                )}
+
+                <div className="flex space-x-4 justify-center">
+                  <Button
+                    onClick={() => responderInvitacion('attending')}
+                    disabled={submittingRsvp}
+                    className={`${
+                      rsvpResponse?.response === 'attending' 
+                        ? 'bg-green-600 hover:bg-green-700' 
+                        : 'bg-green-500 hover:bg-green-600'
+                    }`}
+                  >
+                    {submittingRsvp ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Check className="w-4 h-4 mr-2" />
+                    )}
+                    Asistiré
+                  </Button>
+                  <Button
+                    onClick={() => responderInvitacion('not_attending')}
+                    disabled={submittingRsvp}
+                    variant="outline"
+                    className={`${
+                      rsvpResponse?.response === 'not_attending' 
+                        ? 'border-red-600 text-red-600 bg-red-50' 
+                        : 'border-red-500 text-red-500 hover:bg-red-50'
+                    }`}
+                  >
+                    {submittingRsvp ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500 mr-2"></div>
+                    ) : (
+                      <X className="w-4 h-4 mr-2" />
+                    )}
+                    No podré asistir
+                  </Button>
+                </div>
               </div>
 
               {/* Código QR */}

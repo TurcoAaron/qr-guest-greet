@@ -53,11 +53,15 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          dress_code: string | null
+          end_date: string | null
           event_code: string
+          event_type: string | null
           id: string
           location: string | null
           name: string
           organizer_id: string
+          start_date: string | null
           status: string
           updated_at: string
         }
@@ -65,11 +69,15 @@ export type Database = {
           created_at?: string
           date: string
           description?: string | null
+          dress_code?: string | null
+          end_date?: string | null
           event_code: string
+          event_type?: string | null
           id?: string
           location?: string | null
           name: string
           organizer_id: string
+          start_date?: string | null
           status?: string
           updated_at?: string
         }
@@ -77,11 +85,15 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          dress_code?: string | null
+          end_date?: string | null
           event_code?: string
+          event_type?: string | null
           id?: string
           location?: string | null
           name?: string
           organizer_id?: string
+          start_date?: string | null
           status?: string
           updated_at?: string
         }
@@ -95,6 +107,7 @@ export type Database = {
           id: string
           invitation_code: string
           name: string
+          phone: string | null
           qr_code_data: string
         }
         Insert: {
@@ -104,6 +117,7 @@ export type Database = {
           id?: string
           invitation_code: string
           name: string
+          phone?: string | null
           qr_code_data: string
         }
         Update: {
@@ -113,6 +127,7 @@ export type Database = {
           id?: string
           invitation_code?: string
           name?: string
+          phone?: string | null
           qr_code_data?: string
         }
         Relationships: [
@@ -148,6 +163,48 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      rsvp_responses: {
+        Row: {
+          created_at: string
+          event_id: string
+          guest_id: string
+          id: string
+          response: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          guest_id: string
+          id?: string
+          response: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          guest_id?: string
+          id?: string
+          response?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvp_responses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rsvp_responses_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

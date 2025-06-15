@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2, Calendar, Users, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface Invitado {
   name: string;
   email: string;
+  phone: string;
 }
 
 const CrearEvento = () => {
@@ -25,16 +27,19 @@ const CrearEvento = () => {
   // Estado del evento
   const [nombreEvento, setNombreEvento] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [fecha, setFecha] = useState("");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
   const [ubicacion, setUbicacion] = useState("");
+  const [tipoEvento, setTipoEvento] = useState("");
+  const [codigoVestimenta, setCodigoVestimenta] = useState("");
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([
-    { name: "", email: "" }
+    { name: "", email: "", phone: "" }
   ]);
 
   const agregarInvitado = () => {
-    setInvitados([...invitados, { name: "", email: "" }]);
+    setInvitados([...invitados, { name: "", email: "", phone: "" }]);
   };
 
   const eliminarInvitado = (index: number) => {
@@ -68,10 +73,19 @@ const CrearEvento = () => {
       return;
     }
 
-    if (!fecha) {
+    if (!fechaInicio) {
       toast({
         title: "Error",
-        description: "La fecha del evento es requerida",
+        description: "La fecha de inicio es requerida",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (fechaFin && fechaFin < fechaInicio) {
+      toast({
+        title: "Error",
+        description: "La fecha de fin no puede ser anterior a la fecha de inicio",
         variant: "destructive",
       });
       return;
@@ -106,11 +120,15 @@ const CrearEvento = () => {
         .insert({
           name: nombreEvento.trim(),
           description: descripcion.trim() || null,
-          date: fecha,
+          date: fechaInicio,
+          start_date: fechaInicio,
+          end_date: fechaFin || null,
           location: ubicacion.trim() || null,
           organizer_id: user.id,
           event_code: codigoEvento,
-          status: 'upcoming'
+          status: 'upcoming',
+          event_type: tipoEvento.trim() || null,
+          dress_code: codigoVestimenta.trim() || null
         })
         .select()
         .single();
@@ -131,6 +149,7 @@ const CrearEvento = () => {
           event_id: evento.id,
           name: invitado.name.trim(),
           email: invitado.email.trim() || null,
+          phone: invitado.phone.trim() || null,
           invitation_code: codigoInvitacion,
           qr_code_data: qrData
         };
@@ -147,7 +166,6 @@ const CrearEvento = () => {
         description: `Se creó el evento "${nombreEvento}" con ${invitadosValidos.length} invitados`,
       });
 
-      // Redirigir al dashboard o a la página del evento
       navigate('/dashboard');
 
     } catch (error) {
@@ -210,27 +228,80 @@ const CrearEvento = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="fecha">Fecha y Hora *</Label>
+                  <Label htmlFor="tipo">Tipo de Evento</Label>
+                  <Select value={tipoEvento} onValueChange={setTipoEvento}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Selecciona el tipo de evento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="conference">Conferencia</SelectItem>
+                      <SelectItem value="wedding">Boda</SelectItem>
+                      <SelectItem value="birthday">Cumpleaños</SelectItem>
+                      <SelectItem value="corporate">Corporativo</SelectItem>
+                      <SelectItem value="social">Social</SelectItem>
+                      <SelectItem value="workshop">Taller</SelectItem>
+                      <SelectItem value="seminar">Seminario</SelectItem>
+                      <SelectItem value="other">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="fechaInicio">Fecha y Hora de Inicio *</Label>
                   <Input
-                    id="fecha"
+                    id="fechaInicio"
                     type="datetime-local"
-                    value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    className="mt-2"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="fechaFin">Fecha y Hora de Fin</Label>
+                  <Input
+                    id="fechaFin"
+                    type="datetime-local"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
                     className="mt-2"
                   />
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="ubicacion">Ubicación</Label>
-                <Input
-                  id="ubicacion"
-                  type="text"
-                  placeholder="Lugar donde se realizará el evento"
-                  value={ubicacion}
-                  onChange={(e) => setUbicacion(e.target.value)}
-                  className="mt-2"
-                />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="ubicacion">Ubicación</Label>
+                  <Input
+                    id="ubicacion"
+                    type="text"
+                    placeholder="Lugar donde se realizará el evento"
+                    value={ubicacion}
+                    onChange={(e) => setUbicacion(e.target.value)}
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
+                  <Select value={codigoVestimenta} onValueChange={setCodigoVestimenta}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Selecciona el código de vestimenta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="formal">Formal</SelectItem>
+                      <SelectItem value="semi-formal">Semi-formal</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                      <SelectItem value="business">Ejecutivo</SelectItem>
+                      <SelectItem value="cocktail">Cocktail</SelectItem>
+                      <SelectItem value="black-tie">Etiqueta</SelectItem>
+                      <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
+                      <SelectItem value="theme">Temático</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>
@@ -264,32 +335,48 @@ const CrearEvento = () => {
             <CardContent>
               <div className="space-y-4">
                 {invitados.map((invitado, index) => (
-                  <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <Label className="text-xs text-gray-600">Nombre</Label>
                       <Input
                         type="text"
                         placeholder="Nombre del invitado"
                         value={invitado.name}
                         onChange={(e) => actualizarInvitado(index, 'name', e.target.value)}
+                        className="mt-1"
                       />
                     </div>
-                    <div className="flex-1">
+                    <div>
+                      <Label className="text-xs text-gray-600">Email</Label>
                       <Input
                         type="email"
                         placeholder="Email (opcional)"
                         value={invitado.email}
                         onChange={(e) => actualizarInvitado(index, 'email', e.target.value)}
+                        className="mt-1"
                       />
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => eliminarInvitado(index)}
-                      disabled={invitados.length === 1}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div>
+                      <Label className="text-xs text-gray-600">Teléfono</Label>
+                      <Input
+                        type="tel"
+                        placeholder="Teléfono (opcional)"
+                        value={invitado.phone}
+                        onChange={(e) => actualizarInvitado(index, 'phone', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => eliminarInvitado(index)}
+                        disabled={invitados.length === 1}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -309,7 +396,7 @@ const CrearEvento = () => {
                 </Button>
                 <Button
                   onClick={crearEvento}
-                  disabled={loading || !nombreEvento.trim() || !fecha}
+                  disabled={loading || !nombreEvento.trim() || !fechaInicio}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   {loading ? (

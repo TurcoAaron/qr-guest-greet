@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,7 @@ interface Invitado {
   id?: string;
   name: string;
   email: string;
+  phone: string;
   invitation_code?: string;
   qr_code_data?: string;
 }
@@ -27,9 +27,13 @@ interface Evento {
   name: string;
   description: string;
   date: string;
+  start_date: string;
+  end_date: string;
   location: string;
   event_code: string;
   status: string;
+  event_type: string;
+  dress_code: string;
 }
 
 const EditarEvento = () => {
@@ -45,8 +49,12 @@ const EditarEvento = () => {
   const [nombreEvento, setNombreEvento] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [fecha, setFecha] = useState("");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
   const [ubicacion, setUbicacion] = useState("");
   const [status, setStatus] = useState("upcoming");
+  const [tipoEvento, setTipoEvento] = useState("");
+  const [codigoVestimenta, setCodigoVestimenta] = useState("");
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([]);
@@ -74,8 +82,12 @@ const EditarEvento = () => {
       setNombreEvento(eventoData.name);
       setDescripcion(eventoData.description || "");
       setFecha(eventoData.date);
+      setFechaInicio(eventoData.start_date || eventoData.date);
+      setFechaFin(eventoData.end_date || "");
       setUbicacion(eventoData.location || "");
       setStatus(eventoData.status);
+      setTipoEvento(eventoData.event_type || "");
+      setCodigoVestimenta(eventoData.dress_code || "");
 
       // Cargar invitados
       const { data: invitadosData, error: invitadosError } = await supabase
@@ -101,7 +113,7 @@ const EditarEvento = () => {
   };
 
   const agregarInvitado = () => {
-    setInvitados([...invitados, { name: "", email: "" }]);
+    setInvitados([...invitados, { name: "", email: "", phone: "" }]);
   };
 
   const eliminarInvitado = async (index: number) => {
@@ -155,10 +167,19 @@ const EditarEvento = () => {
       return;
     }
 
-    if (!fecha) {
+    if (!fechaInicio) {
       toast({
         title: "Error",
-        description: "La fecha del evento es requerida",
+        description: "La fecha de inicio es requerida",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (fechaFin && fechaFin < fechaInicio) {
+      toast({
+        title: "Error",
+        description: "La fecha de fin no puede ser anterior a la fecha de inicio",
         variant: "destructive",
       });
       return;
@@ -175,9 +196,13 @@ const EditarEvento = () => {
         .update({
           name: nombreEvento.trim(),
           description: descripcion.trim() || null,
-          date: fecha,
+          date: fechaInicio,
+          start_date: fechaInicio,
+          end_date: fechaFin || null,
           location: ubicacion.trim() || null,
-          status: status
+          status: status,
+          event_type: tipoEvento.trim() || null,
+          dress_code: codigoVestimenta.trim() || null
         })
         .eq('id', eventoId);
 
@@ -191,7 +216,8 @@ const EditarEvento = () => {
             .from('guests')
             .update({
               name: invitado.name.trim(),
-              email: invitado.email.trim() || null
+              email: invitado.email.trim() || null,
+              phone: invitado.phone.trim() || null
             })
             .eq('id', invitado.id);
 
@@ -212,6 +238,7 @@ const EditarEvento = () => {
               event_id: eventoId,
               name: invitado.name.trim(),
               email: invitado.email.trim() || null,
+              phone: invitado.phone.trim() || null,
               invitation_code: codigoInvitacion,
               qr_code_data: qrData
             });
@@ -319,12 +346,44 @@ const EditarEvento = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="fecha">Fecha y Hora *</Label>
+                  <Label htmlFor="tipo">Tipo de Evento</Label>
+                  <Select value={tipoEvento} onValueChange={setTipoEvento}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Selecciona el tipo de evento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="conference">Conferencia</SelectItem>
+                      <SelectItem value="wedding">Boda</SelectItem>
+                      <SelectItem value="birthday">Cumpleaños</SelectItem>
+                      <SelectItem value="corporate">Corporativo</SelectItem>
+                      <SelectItem value="social">Social</SelectItem>
+                      <SelectItem value="workshop">Taller</SelectItem>
+                      <SelectItem value="seminar">Seminario</SelectItem>
+                      <SelectItem value="other">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="fechaInicio">Fecha y Hora de Inicio *</Label>
                   <Input
-                    id="fecha"
+                    id="fechaInicio"
                     type="datetime-local"
-                    value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    className="mt-2"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="fechaFin">Fecha y Hora de Fin</Label>
+                  <Input
+                    id="fechaFin"
+                    type="datetime-local"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
                     className="mt-2"
                   />
                 </div>
@@ -344,19 +403,38 @@ const EditarEvento = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="status">Estado del Evento</Label>
-                  <Select value={status} onValueChange={setStatus}>
+                  <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
+                  <Select value={codigoVestimenta} onValueChange={setCodigoVestimenta}>
                     <SelectTrigger className="mt-2">
-                      <SelectValue />
+                      <SelectValue placeholder="Selecciona el código de vestimenta" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="upcoming">Próximo</SelectItem>
-                      <SelectItem value="active">Activo</SelectItem>
-                      <SelectItem value="completed">Completado</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                      <SelectItem value="formal">Formal</SelectItem>
+                      <SelectItem value="semi-formal">Semi-formal</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                      <SelectItem value="business">Ejecutivo</SelectItem>
+                      <SelectItem value="cocktail">Cocktail</SelectItem>
+                      <SelectItem value="black-tie">Etiqueta</SelectItem>
+                      <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
+                      <SelectItem value="theme">Temático</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="status">Estado del Evento</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="upcoming">Próximo</SelectItem>
+                    <SelectItem value="active">Activo</SelectItem>
+                    <SelectItem value="completed">Completado</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -395,24 +473,38 @@ const EditarEvento = () => {
             <CardContent>
               <div className="space-y-4">
                 {invitados.map((invitado, index) => (
-                  <div key={invitado.id || index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
+                  <div key={invitado.id || index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <Label className="text-xs text-gray-600">Nombre</Label>
                       <Input
                         type="text"
                         placeholder="Nombre del invitado"
                         value={invitado.name}
                         onChange={(e) => actualizarInvitado(index, 'name', e.target.value)}
+                        className="mt-1"
                       />
                     </div>
-                    <div className="flex-1">
+                    <div>
+                      <Label className="text-xs text-gray-600">Email</Label>
                       <Input
                         type="email"
                         placeholder="Email (opcional)"
                         value={invitado.email}
                         onChange={(e) => actualizarInvitado(index, 'email', e.target.value)}
+                        className="mt-1"
                       />
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div>
+                      <Label className="text-xs text-gray-600">Teléfono</Label>
+                      <Input
+                        type="tel"
+                        placeholder="Teléfono (opcional)"
+                        value={invitado.phone}
+                        onChange={(e) => actualizarInvitado(index, 'phone', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex items-end space-x-2">
                       {invitado.invitation_code && (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -445,7 +537,7 @@ const EditarEvento = () => {
                                     <div className="flex items-center space-x-2">
                                       <Calendar className="w-4 h-4 text-purple-600" />
                                       <span className="text-sm">
-                                        {new Date(fecha).toLocaleDateString('es-ES', {
+                                        {new Date(fechaInicio).toLocaleDateString('es-ES', {
                                           weekday: 'long',
                                           year: 'numeric',
                                           month: 'long',
@@ -456,16 +548,32 @@ const EditarEvento = () => {
                                     <div className="flex items-center space-x-2">
                                       <Clock className="w-4 h-4 text-purple-600" />
                                       <span className="text-sm">
-                                        {new Date(fecha).toLocaleTimeString('es-ES', {
+                                        {new Date(fechaInicio).toLocaleTimeString('es-ES', {
                                           hour: '2-digit',
                                           minute: '2-digit'
                                         })} hrs
+                                        {fechaFin && ` - ${new Date(fechaFin).toLocaleTimeString('es-ES', {
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })} hrs`}
                                       </span>
                                     </div>
                                     {ubicacion && (
                                       <div className="flex items-center space-x-2">
                                         <MapPin className="w-4 h-4 text-purple-600" />
                                         <span className="text-sm">{ubicacion}</span>
+                                      </div>
+                                    )}
+                                    {tipoEvento && (
+                                      <div className="flex items-center space-x-2">
+                                        <Calendar className="w-4 h-4 text-purple-600" />
+                                        <span className="text-sm">Tipo: {tipoEvento}</span>
+                                      </div>
+                                    )}
+                                    {codigoVestimenta && (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="w-4 h-4 text-purple-600">👔</span>
+                                        <span className="text-sm">Vestimenta: {codigoVestimenta}</span>
                                       </div>
                                     )}
                                   </div>
@@ -519,7 +627,7 @@ const EditarEvento = () => {
                 </Button>
                 <Button
                   onClick={guardarCambios}
-                  disabled={loading || !nombreEvento.trim() || !fecha}
+                  disabled={loading || !nombreEvento.trim() || !fechaInicio}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   {loading ? (
