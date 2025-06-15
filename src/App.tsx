@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -28,23 +29,23 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<Layout><Index /></Layout>} />
+            <Route path="/auth" element={<Layout><Auth /></Layout>} />
             <Route 
               path="/dashboard" 
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Layout><Dashboard /></Layout>
                 </ProtectedRoute>
               } 
             />
-            <Route path="/invitacion" element={<Invitacion />} />
-            <Route path="/tomar-asistencia/:eventoId" element={<TomarAsistencia />} />
+            <Route path="/invitacion" element={<Layout><Invitacion /></Layout>} />
+            <Route path="/tomar-asistencia/:eventoId" element={<Layout><TomarAsistencia /></Layout>} />
             <Route 
               path="/crear-evento" 
               element={
                 <ProtectedRoute>
-                  <CrearEvento />
+                  <Layout><CrearEvento /></Layout>
                 </ProtectedRoute>
               } 
             />
@@ -52,7 +53,7 @@ const App = () => (
               path="/editar-evento/:eventoId" 
               element={
                 <ProtectedRoute>
-                  <EditarEvento />
+                  <Layout><EditarEvento /></Layout>
                 </ProtectedRoute>
               } 
             />
@@ -60,7 +61,7 @@ const App = () => (
               path="/generar-qr" 
               element={
                 <ProtectedRoute>
-                  <GenerarQR />
+                  <Layout><GenerarQR /></Layout>
                 </ProtectedRoute>
               } 
             />
@@ -68,7 +69,7 @@ const App = () => (
               path="/escanear" 
               element={
                 <ProtectedRoute>
-                  <EscanearQR />
+                  <Layout><EscanearQR /></Layout>
                 </ProtectedRoute>
               } 
             />
@@ -76,11 +77,11 @@ const App = () => (
               path="/administrar" 
               element={
                 <ProtectedRoute>
-                  <Administrar />
+                  <Layout><Administrar /></Layout>
                 </ProtectedRoute>
               } 
             />
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<Layout><NotFound /></Layout>} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
