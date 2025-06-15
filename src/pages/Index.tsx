@@ -1,180 +1,256 @@
 
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, QrCode, Scan, Shield, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { QrCode, Search, Calendar, Users, CheckCircle, Camera } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
-  const { user } = useAuth();
+  const [eventoId, setEventoId] = useState('');
+  const [codigoInvitacion, setCodigoInvitacion] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const features = [
-    {
-      icon: Calendar,
-      title: "Gestión de Eventos",
-      description: "Crea y administra eventos con facilidad, desde bodas hasta conferencias corporativas."
-    },
-    {
-      icon: Users,
-      title: "Lista de Invitados",
-      description: "Gestiona tu lista de invitados, envía invitaciones y controla las confirmaciones."
-    },
-    {
-      icon: QrCode,
-      title: "Códigos QR",
-      description: "Genera códigos QR únicos para cada invitado para un acceso rápido y seguro."
-    },
-    {
-      icon: Scan,
-      title: "Control de Asistencia",
-      description: "Escanea códigos QR para registrar la asistencia en tiempo real."
-    },
-    {
-      icon: Shield,
-      title: "Seguro y Confiable",
-      description: "Tus datos están protegidos con la mejor tecnología de seguridad."
-    },
-    {
-      icon: Zap,
-      title: "Rápido y Eficiente",
-      description: "Interfaz intuitiva que te permite gestionar eventos en segundos."
+  const manejarBuscarEvento = async () => {
+    if (!eventoId.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa un ID de evento",
+        variant: "destructive",
+      });
+      return;
     }
-  ];
+
+    try {
+      const { data: evento, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventoId.trim())
+        .single();
+
+      if (error || !evento) {
+        toast({
+          title: "Evento no encontrado",
+          description: "No se encontró un evento con ese ID",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      navigate(`/tomar-asistencia/${eventoId}`);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error al buscar el evento",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const manejarBuscarInvitacion = async () => {
+    if (!codigoInvitacion.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa un código de invitación",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: invitado, error } = await supabase
+        .from('guests')
+        .select('*, events(*)')
+        .eq('invitation_code', codigoInvitacion.trim())
+        .single();
+
+      if (error || !invitado) {
+        toast({
+          title: "Invitación no encontrada",
+          description: "No se encontró una invitación con ese código",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      navigate('/invitacion', { 
+        state: { 
+          guest: invitado,
+          event: invitado.events 
+        } 
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error al buscar la invitación",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const iniciarEscaneoQR = () => {
+    setIsScanning(true);
+    navigate('/escanear');
+  };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Gestiona tus Eventos con
-              <span className="text-blue-600"> EventManager</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              La plataforma completa para organizar eventos, gestionar invitados y controlar asistencia 
-              con códigos QR. Simple, rápido y profesional.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {user ? (
-                <Link to="/dashboard">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Ir al Dashboard
-                  </Button>
-                </Link>
-              ) : (
-                <>
-                  <Link to="/auth">
-                    <Button size="lg" className="w-full sm:w-auto">
-                      <Calendar className="w-5 h-5 mr-2" />
-                      Comenzar Gratis
-                    </Button>
-                  </Link>
-                  <Link to="/invitacion">
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                      <QrCode className="w-5 h-5 mr-2" />
-                      Ver Invitación Demo
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
+      <div className="container mx-auto px-4 pt-20 pb-16">
+        <div className="text-center max-w-4xl mx-auto">
+          <h1 className="text-5xl font-bold text-gray-800 mb-6">
+            EventManager
+          </h1>
+          <p className="text-xl text-gray-600 mb-12">
+            Sistema completo de gestión de eventos y asistencias
+          </p>
+          
+          {/* Action Cards */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            
+            {/* Tomar Asistencia */}
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="text-center pb-6">
+                <Users className="w-16 h-16 mx-auto text-blue-600 mb-4" />
+                <CardTitle className="text-2xl">Tomar Asistencia</CardTitle>
+                <p className="text-gray-600">
+                  Registra la asistencia para un evento específico
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    ID del Evento
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Ingresa el ID del evento"
+                    value={eventoId}
+                    onChange={(e) => setEventoId(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Button 
+                  onClick={manejarBuscarEvento}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Buscar Evento
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Consultar Invitación */}
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="text-center pb-6">
+                <Calendar className="w-16 h-16 mx-auto text-green-600 mb-4" />
+                <CardTitle className="text-2xl">Consultar Invitación</CardTitle>
+                <p className="text-gray-600">
+                  Consulta los detalles de tu invitación
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Código de Invitación
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Ingresa tu código de invitación"
+                    value={codigoInvitacion}
+                    onChange={(e) => setCodigoInvitacion(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Button 
+                  onClick={manejarBuscarInvitacion}
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Consultar Invitación
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* QR Scanner Section */}
+          <div className="mt-12">
+            <Card className="border-0 shadow-lg max-w-md mx-auto">
+              <CardHeader className="text-center">
+                <QrCode className="w-12 h-12 mx-auto text-purple-600 mb-3" />
+                <CardTitle>Escanear Código QR</CardTitle>
+                <p className="text-gray-600 text-sm">
+                  Usa la cámara para escanear códigos QR
+                </p>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={iniciarEscaneoQR}
+                  className="w-full"
+                  size="lg"
+                  variant="secondary"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Abrir Escáner QR
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <div className="bg-white py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Todo lo que necesitas para gestionar eventos
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+              ¿Por qué usar EventManager?
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              EventManager te proporciona todas las herramientas necesarias para organizar 
-              eventos exitosos de cualquier tamaño.
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Una solución completa para la gestión de eventos, desde la creación hasta el control de asistencias
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <Icon className="w-12 h-12 text-blue-600 mb-4" />
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-gray-600">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-white mb-6">
-              ¿Listo para organizar tu próximo evento?
-            </h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Únete a miles de organizadores que confían en EventManager para sus eventos.
-            </p>
-            {!user && (
-              <Link to="/auth">
-                <Button size="lg" variant="secondary">
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Crear Cuenta Gratis
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-2 mb-4">
-                <Calendar className="w-8 h-8 text-blue-400" />
-                <span className="text-xl font-bold">EventManager</span>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-blue-600" />
               </div>
-              <p className="text-gray-400 mb-4">
-                La plataforma completa para gestionar eventos, invitados y asistencia con códigos QR.
+              <h3 className="font-semibold text-lg mb-2">Gestión Fácil</h3>
+              <p className="text-gray-600">
+                Crea y administra eventos de manera intuitiva y eficiente
               </p>
             </div>
-            <div>
-              <h3 className="font-semibold mb-4">Producto</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link to="/auth" className="hover:text-white">Características</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Precios</Link></li>
-                <li><Link to="/invitacion" className="hover:text-white">Demo</Link></li>
-              </ul>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <QrCode className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Códigos QR</h3>
+              <p className="text-gray-600">
+                Genera códigos QR únicos para cada invitado y evento
+              </p>
             </div>
-            <div>
-              <h3 className="font-semibold mb-4">Soporte</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link to="/auth" className="hover:text-white">Ayuda</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Contacto</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Documentación</Link></li>
-              </ul>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Control Total</h3>
+              <p className="text-gray-600">
+                Monitorea asistencias en tiempo real con reportes detallados
+              </p>
             </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 EventManager. Todos los derechos reservados.</p>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 };

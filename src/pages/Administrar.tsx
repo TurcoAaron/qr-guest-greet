@@ -3,12 +3,25 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Download, Trash2, Search, Calendar } from "lucide-react";
+import { Users, Download, Trash2, Search, Calendar, UserCheck, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const Administrar = () => {
   const [asistencias, setAsistencias] = useState<string[]>([]);
   const [filtro, setFiltro] = useState("");
+  const [eventos, setEventos] = useState<any[]>([]);
+  const [invitados, setInvitados] = useState<any[]>([]);
+  const [asistenciasDB, setAsistenciasDB] = useState<any[]>([]);
+  const [respuestasRSVP, setRespuestasRSVP] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -16,7 +29,58 @@ const Administrar = () => {
     if (asistenciasGuardadas) {
       setAsistencias(JSON.parse(asistenciasGuardadas));
     }
+    cargarDatosSupabase();
   }, []);
+
+  const cargarDatosSupabase = async () => {
+    try {
+      // Cargar eventos
+      const { data: eventosData } = await supabase
+        .from('events')
+        .select('*');
+      
+      if (eventosData) {
+        setEventos(eventosData);
+      }
+
+      // Cargar invitados
+      const { data: invitadosData } = await supabase
+        .from('guests')
+        .select('*');
+      
+      if (invitadosData) {
+        setInvitados(invitadosData);
+      }
+
+      // Cargar asistencias
+      const { data: asistenciasData } = await supabase
+        .from('attendances')
+        .select(`
+          *,
+          guests (name, email),
+          events (name)
+        `);
+      
+      if (asistenciasData) {
+        setAsistenciasDB(asistenciasData);
+      }
+
+      // Cargar respuestas RSVP
+      const { data: rsvpData } = await supabase
+        .from('rsvp_responses')
+        .select(`
+          *,
+          guests (name, email),
+          events (name)
+        `);
+      
+      if (rsvpData) {
+        setRespuestasRSVP(rsvpData);
+      }
+    } catch (error) {
+      console.error('Error cargando datos:', error);
+    }
+  };
 
   const procesarAsistencias = () => {
     return asistencias.map(codigo => {
@@ -86,6 +150,8 @@ const Administrar = () => {
     ultimaHora: asistenciasProcesadas.filter(a => 
       Date.now() - a.timestamp < 3600000
     ).length,
+    confirmados: respuestasRSVP.filter(r => r.response === 'attending').length,
+    presentes: asistenciasDB.length,
   };
 
   return (
@@ -104,12 +170,12 @@ const Administrar = () => {
           </div>
 
           {/* Estadísticas */}
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-6 gap-6">
             <Card>
               <CardContent className="p-6 text-center">
                 <Users className="w-8 h-8 mx-auto text-blue-600 mb-2" />
                 <div className="text-2xl font-bold text-gray-800">{estadisticas.total}</div>
-                <div className="text-sm text-gray-600">Total Asistencias</div>
+                <div className="text-sm text-gray-600">Total Asistencias (Local)</div>
               </CardContent>
             </Card>
 
@@ -128,6 +194,22 @@ const Administrar = () => {
                 </div>
                 <div className="text-2xl font-bold text-gray-800">{estadisticas.ultimaHora}</div>
                 <div className="text-sm text-gray-600">Última Hora</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 text-center">
+                <UserCheck className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
+                <div className="text-2xl font-bold text-gray-800">{estadisticas.confirmados}</div>
+                <div className="text-sm text-gray-600">Confirmados</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 text-center">
+                <UserPlus className="w-8 h-8 mx-auto text-purple-600 mb-2" />
+                <div className="text-2xl font-bold text-gray-800">{estadisticas.presentes}</div>
+                <div className="text-sm text-gray-600">Presentes</div>
               </CardContent>
             </Card>
 
@@ -184,11 +266,83 @@ const Administrar = () => {
             </CardContent>
           </Card>
 
-          {/* Lista de asistencias */}
+          {/* Invitados Confirmados */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Invitados que Confirmaron Asistencia</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {respuestasRSVP.filter(r => r.response === 'attending').length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No hay confirmaciones de asistencia aún
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Evento</TableHead>
+                      <TableHead>Fecha Confirmación</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {respuestasRSVP
+                      .filter(r => r.response === 'attending')
+                      .map((rsvp) => (
+                      <TableRow key={rsvp.id}>
+                        <TableCell className="font-medium">{rsvp.guests?.name}</TableCell>
+                        <TableCell>{rsvp.guests?.email}</TableCell>
+                        <TableCell>{rsvp.events?.name}</TableCell>
+                        <TableCell>{new Date(rsvp.created_at).toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Presentes en el Evento */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Presentes en el Evento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {asistenciasDB.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No hay asistencias registradas aún
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Evento</TableHead>
+                      <TableHead>Hora de Llegada</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {asistenciasDB.map((asistencia) => (
+                      <TableRow key={asistencia.id}>
+                        <TableCell className="font-medium">{asistencia.guests?.name}</TableCell>
+                        <TableCell>{asistencia.guests?.email}</TableCell>
+                        <TableCell>{asistencia.events?.name}</TableCell>
+                        <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Lista de asistencias locales */}
           <Card>
             <CardHeader>
               <CardTitle>
-                Registro de Asistencias 
+                Registro de Asistencias (Local)
                 {filtro && (
                   <span className="text-sm font-normal text-gray-600 ml-2">
                     ({asistenciasFiltradas.length} de {asistencias.length} registros)
