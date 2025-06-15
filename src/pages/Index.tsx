@@ -61,17 +61,31 @@ const Index = () => {
       return;
     }
 
+    const codigo = codigoInvitacion.trim().toUpperCase();
     try {
+      // Registrar en consola el código buscado
+      console.log("Buscando invitación para código:", codigo);
       const { data: invitado, error } = await supabase
         .from('guests')
         .select('*, events(*)')
-        .eq('invitation_code', codigoInvitacion.trim())
-        .single();
+        .eq('invitation_code', codigo)
+        .maybeSingle();
+
+      console.log("Resultado invitado:", invitado, "Error:", error);
 
       if (error || !invitado) {
         toast({
           title: "Invitación no encontrada",
-          description: "No se encontró una invitación con ese código",
+          description: "No se encontró una invitación con ese código. Verifica que el código sea correcto y en mayúsculas.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!invitado.events) {
+        toast({
+          title: "Evento no encontrado",
+          description: "La invitación está asociada a un evento que no existe.",
           variant: "destructive",
         });
         return;
