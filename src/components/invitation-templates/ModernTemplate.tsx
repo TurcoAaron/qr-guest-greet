@@ -1,9 +1,10 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, MapPin, Clock, Shirt } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { RSVPSection } from "./RSVPSection";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 
 interface ModernTemplateProps {
   invitado: {
@@ -153,7 +154,7 @@ export const ModernTemplate = ({
         {evento.dress_code && (
           <div className="bg-purple-50 rounded-xl p-6 mb-12">
             <div className="flex items-center mb-3">
-              <Palette className="w-6 h-6 text-purple-600 mr-3" />
+              <Shirt className="w-6 h-6 text-purple-600 mr-3" />
               <h3 className="text-xl font-semibold text-gray-800">Código de Vestimenta</h3>
             </div>
             <p className="text-gray-700 font-medium">{getDressCodeText(evento.dress_code)}</p>
@@ -179,7 +180,7 @@ export const ModernTemplate = ({
           <div className="text-center bg-gray-50 rounded-xl p-8">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Código de Acceso</h3>
             <div className="flex justify-center mb-4">
-              <QRCode 
+              <QRCodeSVG 
                 value={invitado.qr_code_data} 
                 size={150}
                 className="border-4 border-white shadow-lg rounded-lg"
