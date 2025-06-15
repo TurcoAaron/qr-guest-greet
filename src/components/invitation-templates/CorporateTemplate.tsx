@@ -1,9 +1,9 @@
-
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette, Building2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
+import { CountdownTimer } from "./CountdownTimer";
 
 interface CorporateTemplateProps {
   invitado: {
@@ -24,9 +24,21 @@ interface CorporateTemplateProps {
     image_url?: string;
   };
   showRSVP?: boolean;
+  maxPasses?: number;
+  defaultAdults?: number;
+  defaultChildren?: number;
+  defaultPets?: number;
 }
 
-export const CorporateTemplate = ({ invitado, evento, showRSVP = false }: CorporateTemplateProps) => {
+export const CorporateTemplate = ({ 
+  invitado, 
+  evento, 
+  showRSVP = false,
+  maxPasses = 1,
+  defaultAdults = 1,
+  defaultChildren = 0,
+  defaultPets = 0
+}: CorporateTemplateProps) => {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -103,6 +115,11 @@ export const CorporateTemplate = ({ invitado, evento, showRSVP = false }: Corpor
 
       <div className="max-w-4xl mx-auto px-6 py-12">
         
+        {/* Cuenta regresiva */}
+        {evento.start_date && (
+          <CountdownTimer targetDate={evento.start_date} className="mb-12" />
+        )}
+
         {/* Información del evento */}
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-slate-800 mb-6 border-b border-slate-200 pb-2">
@@ -173,6 +190,10 @@ export const CorporateTemplate = ({ invitado, evento, showRSVP = false }: Corpor
               eventId={evento.id} 
               guestId={invitado.id}
               guestName={invitado.name}
+              maxPasses={maxPasses}
+              defaultAdults={defaultAdults}
+              defaultChildren={defaultChildren}
+              defaultPets={defaultPets}
             />
           </div>
         )}

@@ -1,9 +1,9 @@
-
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
+import { CountdownTimer } from "./CountdownTimer";
 
 interface ElegantTemplateProps {
   invitado: {
@@ -24,9 +24,21 @@ interface ElegantTemplateProps {
     image_url?: string;
   };
   showRSVP?: boolean;
+  maxPasses?: number;
+  defaultAdults?: number;
+  defaultChildren?: number;
+  defaultPets?: number;
 }
 
-export const ElegantTemplate = ({ invitado, evento, showRSVP = false }: ElegantTemplateProps) => {
+export const ElegantTemplate = ({ 
+  invitado, 
+  evento, 
+  showRSVP = false,
+  maxPasses = 1,
+  defaultAdults = 1,
+  defaultChildren = 0,
+  defaultPets = 0
+}: ElegantTemplateProps) => {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -101,6 +113,11 @@ export const ElegantTemplate = ({ invitado, evento, showRSVP = false }: ElegantT
           </div>
         </div>
 
+        {/* Cuenta regresiva */}
+        {evento.start_date && (
+          <CountdownTimer targetDate={evento.start_date} className="mb-12" />
+        )}
+
         {/* Detalles del evento en tarjetas elegantes */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           
@@ -163,6 +180,10 @@ export const ElegantTemplate = ({ invitado, evento, showRSVP = false }: ElegantT
               eventId={evento.id} 
               guestId={invitado.id}
               guestName={invitado.name}
+              maxPasses={maxPasses}
+              defaultAdults={defaultAdults}
+              defaultChildren={defaultChildren}
+              defaultPets={defaultPets}
             />
           </div>
         )}

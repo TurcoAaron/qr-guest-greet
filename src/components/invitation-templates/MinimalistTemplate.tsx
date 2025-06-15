@@ -4,6 +4,7 @@ import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
+import { CountdownTimer } from "./CountdownTimer";
 
 interface MinimalistTemplateProps {
   invitado: {
@@ -108,6 +109,11 @@ export const MinimalistTemplate = ({
             </p>
           </div>
         </div>
+
+        {/* Cuenta regresiva */}
+        {evento.start_date && (
+          <CountdownTimer targetDate={evento.start_date} className="mb-16" />
+        )}
 
         {/* Detalles del evento */}
         <div className="space-y-12">

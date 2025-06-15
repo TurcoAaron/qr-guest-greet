@@ -1,9 +1,9 @@
-
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette, PartyPopper } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
+import { CountdownTimer } from "./CountdownTimer";
 
 interface FestiveTemplateProps {
   invitado: {
@@ -24,9 +24,21 @@ interface FestiveTemplateProps {
     image_url?: string;
   };
   showRSVP?: boolean;
+  maxPasses?: number;
+  defaultAdults?: number;
+  defaultChildren?: number;
+  defaultPets?: number;
 }
 
-export const FestiveTemplate = ({ invitado, evento, showRSVP = false }: FestiveTemplateProps) => {
+export const FestiveTemplate = ({ 
+  invitado, 
+  evento, 
+  showRSVP = false,
+  maxPasses = 1,
+  defaultAdults = 1,
+  defaultChildren = 0,
+  defaultPets = 0
+}: FestiveTemplateProps) => {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -116,6 +128,11 @@ export const FestiveTemplate = ({ invitado, evento, showRSVP = false }: FestiveT
           </div>
         </div>
 
+        {/* Cuenta regresiva */}
+        {evento.start_date && (
+          <CountdownTimer targetDate={evento.start_date} className="mb-12" />
+        )}
+
         {/* Detalles del evento */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           
@@ -182,6 +199,10 @@ export const FestiveTemplate = ({ invitado, evento, showRSVP = false }: FestiveT
               eventId={evento.id} 
               guestId={invitado.id}
               guestName={invitado.name}
+              maxPasses={maxPasses}
+              defaultAdults={defaultAdults}
+              defaultChildren={defaultChildren}
+              defaultPets={defaultPets}
             />
           </div>
         )}
