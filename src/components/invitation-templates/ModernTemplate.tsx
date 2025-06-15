@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { RSVPSection } from "./RSVPSection";
 import { QRCodeSVG } from "qrcode.react";
+import { CountdownTimer } from "./CountdownTimer";
 
 interface ModernTemplateProps {
   invitado: {
@@ -105,6 +106,9 @@ export const ModernTemplate = ({
             Nos complace invitarte a este evento especial
           </p>
         </div>
+
+        {/* Cuenta regresiva */}
+        <CountdownTimer targetDate={evento.start_date} className="mb-12" />
 
         {/* Detalles del evento */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">

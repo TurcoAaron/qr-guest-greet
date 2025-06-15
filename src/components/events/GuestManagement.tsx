@@ -45,7 +45,8 @@ export const GuestManagement = ({
       phone: "",
       passes_count: 1,
       adults_count: 1,
-      children_count: 0
+      children_count: 0,
+      pets_count: 0
     }]);
   };
 
@@ -82,18 +83,18 @@ export const GuestManagement = ({
   const actualizarInvitado = (index: number, field: keyof Invitado, value: string | number) => {
     const nuevosInvitados = [...invitados];
     
-    // Type-safe assignment
     if (field === 'name' || field === 'email' || field === 'phone') {
-      (nuevosInvitados[index] as any)[field] = value as string;
-    } else if (field === 'passes_count' || field === 'adults_count' || field === 'children_count') {
-      (nuevosInvitados[index] as any)[field] = value as number;
+      nuevosInvitados[index][field] = value as string;
+    } else if (field === 'passes_count' || field === 'adults_count' || field === 'children_count' || field === 'pets_count') {
+      nuevosInvitados[index][field] = value as number;
     }
     
-    // Si se actualiza adults_count o children_count, actualizar passes_count automáticamente
-    if (field === 'adults_count' || field === 'children_count') {
+    // Si se actualiza adults_count, children_count o pets_count, actualizar passes_count automáticamente
+    if (field === 'adults_count' || field === 'children_count' || field === 'pets_count') {
       const adults = field === 'adults_count' ? Number(value) : nuevosInvitados[index].adults_count;
       const children = field === 'children_count' ? Number(value) : nuevosInvitados[index].children_count;
-      nuevosInvitados[index].passes_count = adults + children;
+      const pets = field === 'pets_count' ? Number(value) : (nuevosInvitados[index].pets_count || 0);
+      nuevosInvitados[index].passes_count = adults + children + pets;
     }
     
     setInvitados(nuevosInvitados);
@@ -106,6 +107,7 @@ export const GuestManagement = ({
   const totalPases = invitados.reduce((total, inv) => total + (inv.passes_count || 1), 0);
   const totalAdultos = invitados.reduce((total, inv) => total + (inv.adults_count || 1), 0);
   const totalNiños = invitados.reduce((total, inv) => total + (inv.children_count || 0), 0);
+  const totalMascotas = invitados.reduce((total, inv) => total + (inv.pets_count || 0), 0);
 
   return (
     <>
@@ -121,16 +123,17 @@ export const GuestManagement = ({
               Agregar Invitado
             </Button>
           </div>
-          <div className="text-sm text-gray-600 grid grid-cols-3 gap-4">
+          <div className="text-sm text-gray-600 grid grid-cols-4 gap-4">
             <div>Total de pases: <span className="font-semibold">{totalPases}</span></div>
             <div>Total adultos: <span className="font-semibold">{totalAdultos}</span></div>
             <div>Total niños: <span className="font-semibold">{totalNiños}</span></div>
+            <div>Total mascotas: <span className="font-semibold">{totalMascotas}</span></div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {invitados.map((invitado, index) => (
-              <div key={invitado.id || index} className="grid grid-cols-1 md:grid-cols-7 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div key={invitado.id || index} className="grid grid-cols-1 md:grid-cols-8 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <Label className="text-xs text-gray-600">Nombre</Label>
                   <Input
@@ -180,6 +183,17 @@ export const GuestManagement = ({
                     max="10"
                     value={invitado.children_count}
                     onChange={(e) => actualizarInvitado(index, 'children_count', parseInt(e.target.value) || 0)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Mascotas</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="5"
+                    value={invitado.pets_count || 0}
+                    onChange={(e) => actualizarInvitado(index, 'pets_count', parseInt(e.target.value) || 0)}
                     className="mt-1"
                   />
                 </div>

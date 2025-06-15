@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Download, Trash2, Search, Calendar, UserCheck, UserPlus, Filter, RefreshCw } from "lucide-react";
+import { Users, Download, Trash2, Search, Calendar, UserCheck, UserPlus, Filter, RefreshCw, Baby, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -131,11 +131,6 @@ const Administrar = () => {
     });
   };
 
-  const asistenciasProcesadas = procesarAsistencias();
-  const asistenciasFiltradas = asistenciasProcesadas.filter(asistencia =>
-    asistencia.nombre.toLowerCase().includes(filtro.toLowerCase())
-  );
-
   const exportarCSV = () => {
     const headers = ["Nombre", "Fecha", "Hora", "Código"];
     const rows = asistenciasProcesadas.map(a => [
@@ -181,6 +176,9 @@ const Administrar = () => {
     totalConfirmados: respuestasRSVP.length,
     totalPresentes: asistenciasDB.length,
     totalAsistenciasLocal: asistencias.length,
+    totalAdultos: invitados.reduce((total, inv) => total + (inv.adults_count || 0), 0),
+    totalNiños: invitados.reduce((total, inv) => total + (inv.children_count || 0), 0),
+    totalMascotas: invitados.reduce((total, inv) => total + (inv.pets_count || 0), 0),
   };
 
   // Estadísticas por evento seleccionado
@@ -293,8 +291,8 @@ const Administrar = () => {
             </TabsList>
 
             <TabsContent value="general" className="space-y-6">
-              {/* Estadísticas generales */}
-              <div className="grid md:grid-cols-5 gap-6">
+              {/* Estadísticas generales actualizadas */}
+              <div className="grid md:grid-cols-8 gap-4">
                 <Card>
                   <CardContent className="p-6 text-center">
                     <Calendar className="w-8 h-8 mx-auto text-blue-600 mb-2" />
@@ -336,6 +334,30 @@ const Administrar = () => {
                     <div className="text-sm text-gray-600">Asistencias Local</div>
                   </CardContent>
                 </Card>
+
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Users className="w-8 h-8 mx-auto text-indigo-600 mb-2" />
+                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalAdultos}</div>
+                    <div className="text-sm text-gray-600">Total Adultos</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Baby className="w-8 h-8 mx-auto text-pink-600 mb-2" />
+                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalNiños}</div>
+                    <div className="text-sm text-gray-600">Total Niños</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Heart className="w-8 h-8 mx-auto text-red-600 mb-2" />
+                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalMascotas}</div>
+                    <div className="text-sm text-gray-600">Total Mascotas</div>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Todas las asistencias registradas */}
@@ -355,6 +377,9 @@ const Administrar = () => {
                           <TableHead>Nombre</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Evento</TableHead>
+                          <TableHead>Adultos</TableHead>
+                          <TableHead>Niños</TableHead>
+                          <TableHead>Mascotas</TableHead>
                           <TableHead>Hora de Llegada</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -369,6 +394,9 @@ const Administrar = () => {
                             <TableCell className="font-medium">{asistencia.guests?.name || 'N/A'}</TableCell>
                             <TableCell>{asistencia.guests?.email || 'N/A'}</TableCell>
                             <TableCell>{asistencia.events?.name || 'N/A'}</TableCell>
+                            <TableCell>{asistencia.actual_adults_count || asistencia.guests?.adults_count || '-'}</TableCell>
+                            <TableCell>{asistencia.actual_children_count || asistencia.guests?.children_count || '-'}</TableCell>
+                            <TableCell>{asistencia.actual_pets_count || asistencia.guests?.pets_count || '-'}</TableCell>
                             <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
                           </TableRow>
                         ))}
@@ -392,18 +420,24 @@ const Administrar = () => {
                         <TableHead>Invitados</TableHead>
                         <TableHead>Confirmados</TableHead>
                         <TableHead>Presentes</TableHead>
+                        <TableHead>Adultos</TableHead>
+                        <TableHead>Niños</TableHead>
+                        <TableHead>Mascotas</TableHead>
                         <TableHead>% Asistencia</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {eventos.map((evento) => {
-                        const invitadosEvento = invitados.filter(i => i.event_id === evento.id).length;
+                        const invitadosEvento = invitados.filter(i => i.event_id === evento.id);
                         const confirmadosEvento = respuestasRSVP.filter(r => 
                           r.guests?.event_id === evento.id
                         ).length;
                         const presentesEvento = asistenciasDB.filter(a => 
                           a.guests?.event_id === evento.id
                         ).length;
+                        const adultosEvento = invitadosEvento.reduce((total, inv) => total + (inv.adults_count || 0), 0);
+                        const niñosEvento = invitadosEvento.reduce((total, inv) => total + (inv.children_count || 0), 0);
+                        const mascotasEvento = invitadosEvento.reduce((total, inv) => total + (inv.pets_count || 0), 0);
                         const porcentaje = confirmadosEvento > 0 ? Math.round((presentesEvento / confirmadosEvento) * 100) : 0;
 
                         return (
@@ -418,9 +452,12 @@ const Administrar = () => {
                                 {evento.status}
                               </span>
                             </TableCell>
-                            <TableCell>{invitadosEvento}</TableCell>
+                            <TableCell>{invitadosEvento.length}</TableCell>
                             <TableCell>{confirmadosEvento}</TableCell>
                             <TableCell>{presentesEvento}</TableCell>
+                            <TableCell>{adultosEvento}</TableCell>
+                            <TableCell>{niñosEvento}</TableCell>
+                            <TableCell>{mascotasEvento}</TableCell>
                             <TableCell>{porcentaje}%</TableCell>
                           </TableRow>
                         );
