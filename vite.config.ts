@@ -32,25 +32,6 @@ export default defineConfig(({ mode }) => ({
             './src/components/invitation-templates/MinimalistTemplate.tsx',
             './src/components/invitation-templates/TemplateRenderer.tsx',
           ],
-        },
-      },
-    },
-    sourcemap: false,
-    minify: 'esbuild', // Changed from 'terser' to 'esbuild'
-    chunkSizeWarningLimit: 1000,
-    // Optimize build for production
-    target: 'esnext',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'invitation-templates': [
-            './src/components/invitation-templates/ModernTemplate.tsx',
-            './src/components/invitation-templates/ElegantTemplate.tsx',
-            './src/components/invitation-templates/FestiveTemplate.tsx',
-            './src/components/invitation-templates/CorporateTemplate.tsx',
-            './src/components/invitation-templates/MinimalistTemplate.tsx',
-            './src/components/invitation-templates/TemplateRenderer.tsx',
-          ],
           'vendor': ['react', 'react-dom'],
           'ui': [
             './src/components/ui/button.tsx',
@@ -61,9 +42,12 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
+    sourcemap: false,
+    minify: 'esbuild',
+    chunkSizeWarningLimit: 1000,
+    target: 'esnext',
   },
   assetsInclude: ['**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif'],
-  // Optimize dependencies
   optimizeDeps: {
     include: [
       'react',
