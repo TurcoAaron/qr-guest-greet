@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +18,6 @@ interface Event {
   start_date: string;
   end_date: string;
   location: string;
-  event_code: string;
   status: 'upcoming' | 'active' | 'completed' | 'cancelled';
   event_type: string;
   dress_code: string;
@@ -156,10 +154,6 @@ const Dashboard = () => {
               <span>Vestimenta: {event.dress_code}</span>
             </div>
           )}
-          <div className="flex items-center space-x-2">
-            <span className="font-medium">Código:</span>
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded">{event.event_code}</span>
-          </div>
         </div>
       </CardContent>
     </Card>

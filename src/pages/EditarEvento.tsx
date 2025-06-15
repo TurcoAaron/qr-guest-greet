@@ -30,10 +30,10 @@ interface Evento {
   start_date: string;
   end_date: string;
   location: string;
-  event_code: string;
   status: string;
   event_type: string;
   dress_code: string;
+  event_code: string;
 }
 
 const EditarEvento = () => {
@@ -451,7 +451,7 @@ const EditarEvento = () => {
 
               <div className="bg-gray-50 p-4 rounded-lg">
                 <Label className="text-sm font-medium text-gray-700">Código del Evento</Label>
-                <p className="font-mono bg-white px-3 py-2 rounded border mt-1">{evento.event_code}</p>
+                <p className="font-mono bg-white px-3 py-2 rounded border mt-1">{evento?.event_code}</p>
               </div>
             </CardContent>
           </Card>

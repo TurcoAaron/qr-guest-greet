@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +14,6 @@ interface Evento {
   description: string;
   date: string;
   location: string;
-  event_code: string;
 }
 
 interface Asistencia {
@@ -28,7 +26,7 @@ const TomarAsistencia = () => {
   const { eventoId } = useParams();
   const navigate = useNavigate();
   const [evento, setEvento] = useState<Evento | null>(null);
-  const [codigoManual, setCodigoManual] = useState("");
+  const [guestIdManual, setGuestIdManual] = useState("");
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [ultimoRegistrado, setUltimoRegistrado] = useState("");
   const [loading, setLoading] = useState(true);
@@ -90,29 +88,29 @@ const TomarAsistencia = () => {
     }
   };
 
-  const registrarAsistencia = async (codigoInvitacion: string) => {
-    if (!codigoInvitacion.trim()) {
+  const registrarAsistencia = async (guestId: string) => {
+    if (!guestId.trim()) {
       toast({
         title: "Error",
-        description: "Código de invitación inválido",
+        description: "ID de invitado inválido",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      // Buscar el invitado por código de invitación
+      // Buscar el invitado por ID
       const { data: invitado, error: errorInvitado } = await supabase
         .from('guests')
         .select('*')
-        .eq('invitation_code', codigoInvitacion.trim())
+        .eq('id', guestId.trim())
         .eq('event_id', eventoId)
         .single();
 
       if (errorInvitado || !invitado) {
         toast({
           title: "Error",
-          description: "Código de invitación no válido para este evento",
+          description: "ID de invitado no válido para este evento",
           variant: "destructive",
         });
         return;
@@ -141,7 +139,7 @@ const TomarAsistencia = () => {
         .insert({
           guest_id: invitado.id,
           event_id: eventoId,
-          checked_in_by: null // Como no hay autenticación requerida para esto
+          checked_in_by: null
         });
 
       if (errorAsistencia) throw errorAsistencia;
@@ -152,8 +150,8 @@ const TomarAsistencia = () => {
         description: `Bienvenido/a ${invitado.name}`,
       });
 
-      setCodigoManual("");
-      cargarAsistencias(); // Recargar la lista
+      setGuestIdManual("");
+      cargarAsistencias();
     } catch (error) {
       console.error('Error registrando asistencia:', error);
       toast({
@@ -166,9 +164,9 @@ const TomarAsistencia = () => {
 
   const iniciarEscaneo = () => {
     // En una implementación real, aquí se abriría la cámara
-    const codigoSimulado = prompt("Simular código escaneado (código de invitación):");
-    if (codigoSimulado) {
-      registrarAsistencia(codigoSimulado);
+    const idSimulado = prompt("Simular ID escaneado (ID de invitado):");
+    if (idSimulado) {
+      registrarAsistencia(idSimulado);
     }
   };
 
@@ -216,8 +214,8 @@ const TomarAsistencia = () => {
                   <span>Volver</span>
                 </Button>
                 <div className="text-right">
-                  <div className="text-sm text-gray-600">Código del evento</div>
-                  <div className="font-mono font-bold">{evento.event_code}</div>
+                  <div className="text-sm text-gray-600">ID del evento</div>
+                  <div className="font-mono font-bold">{evento.id}</div>
                 </div>
               </div>
               <div className="text-center">
@@ -262,7 +260,7 @@ const TomarAsistencia = () => {
               <CardContent className="p-6 text-center">
                 <XCircle className="w-8 h-8 mx-auto text-orange-600 mb-2" />
                 <div className="text-2xl font-bold text-gray-800">0</div>
-                <div className="text-sm text-gray-600">Códigos Inválidos</div>
+                <div className="text-sm text-gray-600">IDs Inválidos</div>
               </CardContent>
             </Card>
           </div>
@@ -298,24 +296,24 @@ const TomarAsistencia = () => {
                   <h3 className="text-lg font-semibold">Entrada Manual</h3>
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="codigo" className="text-base">
-                        Código de Invitación
+                      <Label htmlFor="guestId" className="text-base">
+                        ID de Invitado
                       </Label>
                       <Input
-                        id="codigo"
+                        id="guestId"
                         type="text"
-                        placeholder="Código de invitación"
-                        value={codigoManual}
-                        onChange={(e) => setCodigoManual(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && registrarAsistencia(codigoManual)}
+                        placeholder="ID del invitado"
+                        value={guestIdManual}
+                        onChange={(e) => setGuestIdManual(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && registrarAsistencia(guestIdManual)}
                         className="mt-2"
                       />
                     </div>
                     
                     <Button
-                      onClick={() => registrarAsistencia(codigoManual)}
+                      onClick={() => registrarAsistencia(guestIdManual)}
                       className="w-full bg-green-600 hover:bg-green-700"
-                      disabled={!codigoManual.trim()}
+                      disabled={!guestIdManual.trim()}
                     >
                       Registrar Asistencia
                     </Button>
