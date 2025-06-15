@@ -9,17 +9,17 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
-  const [eventoId, setEventoId] = useState('');
+  const [codigoEvento, setCodigoEvento] = useState('');
   const [codigoInvitacion, setCodigoInvitacion] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const manejarBuscarEvento = async () => {
-    if (!eventoId.trim()) {
+    if (!codigoEvento.trim()) {
       toast({
         title: "Error",
-        description: "Por favor ingresa un ID de evento",
+        description: "Por favor ingresa un código de evento",
         variant: "destructive",
       });
       return;
@@ -29,19 +29,19 @@ const Index = () => {
       const { data: evento, error } = await supabase
         .from('events')
         .select('*')
-        .eq('id', eventoId.trim())
+        .eq('event_code', codigoEvento.trim().toUpperCase())
         .single();
 
       if (error || !evento) {
         toast({
           title: "Evento no encontrado",
-          description: "No se encontró un evento con ese ID",
+          description: "No se encontró un evento con ese código",
           variant: "destructive",
         });
         return;
       }
 
-      navigate(`/tomar-asistencia/${eventoId}`);
+      navigate(`/tomar-asistencia/${evento.id}`);
     } catch (error) {
       toast({
         title: "Error",
@@ -124,13 +124,13 @@ const Index = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    ID del Evento
+                    Código del Evento
                   </label>
                   <Input
                     type="text"
-                    placeholder="Ingresa el ID del evento"
-                    value={eventoId}
-                    onChange={(e) => setEventoId(e.target.value)}
+                    placeholder="Ej: CONF2024"
+                    value={codigoEvento}
+                    onChange={(e) => setCodigoEvento(e.target.value)}
                     className="w-full"
                   />
                 </div>
