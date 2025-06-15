@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, MapPin, Edit, Clock } from 'lucide-react';
+import { Calendar, Users, MapPin, Edit, Clock, Hash } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -61,11 +61,13 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
           <div>
             <CardTitle className="text-lg">{event.name}</CardTitle>
             <CardDescription className="mt-1">{event.description}</CardDescription>
-            {event.event_type && (
-              <Badge variant="outline" className="mt-2">
-                {formatearTipoEvento(event.event_type)}
-              </Badge>
-            )}
+            <div className="flex items-center space-x-2 mt-2">
+              {event.event_type && (
+                <Badge variant="outline">
+                  {formatearTipoEvento(event.event_type)}
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             {getStatusBadge(event.status)}
@@ -82,6 +84,10 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2">
+            <Hash className="w-4 h-4" />
+            <span className="font-mono text-xs">{event.id}</span>
+          </div>
           <div className="flex items-center space-x-2">
             <Calendar className="w-4 h-4" />
             <span>
