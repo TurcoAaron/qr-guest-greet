@@ -39,7 +39,14 @@ export const GuestManagement = ({
   const [previewInvitado, setPreviewInvitado] = useState<Invitado | null>(null);
 
   const agregarInvitado = () => {
-    setInvitados([...invitados, { name: "", email: "", phone: "" }]);
+    setInvitados([...invitados, { 
+      name: "", 
+      email: "", 
+      phone: "",
+      passes_count: 1,
+      adults_count: 1,
+      children_count: 0
+    }]);
   };
 
   const eliminarInvitado = async (index: number) => {
@@ -72,15 +79,27 @@ export const GuestManagement = ({
     setInvitados(invitados.filter((_, i) => i !== index));
   };
 
-  const actualizarInvitado = (index: number, field: keyof Invitado, value: string) => {
+  const actualizarInvitado = (index: number, field: keyof Invitado, value: string | number) => {
     const nuevosInvitados = [...invitados];
-    nuevosInvitados[index][field] = value;
+    nuevosInvitados[index][field] = value as any;
+    
+    // Si se actualiza adults_count o children_count, actualizar passes_count automáticamente
+    if (field === 'adults_count' || field === 'children_count') {
+      const adults = field === 'adults_count' ? Number(value) : nuevosInvitados[index].adults_count;
+      const children = field === 'children_count' ? Number(value) : nuevosInvitados[index].children_count;
+      nuevosInvitados[index].passes_count = adults + children;
+    }
+    
     setInvitados(nuevosInvitados);
   };
 
   const mostrarPreview = (invitado: Invitado) => {
     setPreviewInvitado(invitado);
   };
+
+  const totalPases = invitados.reduce((total, inv) => total + (inv.passes_count || 1), 0);
+  const totalAdultos = invitados.reduce((total, inv) => total + (inv.adults_count || 1), 0);
+  const totalNiños = invitados.reduce((total, inv) => total + (inv.children_count || 0), 0);
 
   return (
     <>
@@ -96,11 +115,16 @@ export const GuestManagement = ({
               Agregar Invitado
             </Button>
           </div>
+          <div className="text-sm text-gray-600 grid grid-cols-3 gap-4">
+            <div>Total de pases: <span className="font-semibold">{totalPases}</span></div>
+            <div>Total adultos: <span className="font-semibold">{totalAdultos}</span></div>
+            <div>Total niños: <span className="font-semibold">{totalNiños}</span></div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {invitados.map((invitado, index) => (
-              <div key={invitado.id || index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div key={invitado.id || index} className="grid grid-cols-1 md:grid-cols-7 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <Label className="text-xs text-gray-600">Nombre</Label>
                   <Input
@@ -129,6 +153,37 @@ export const GuestManagement = ({
                     value={invitado.phone}
                     onChange={(e) => actualizarInvitado(index, 'phone', e.target.value)}
                     className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Adultos</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={invitado.adults_count}
+                    onChange={(e) => actualizarInvitado(index, 'adults_count', parseInt(e.target.value) || 0)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Niños</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={invitado.children_count}
+                    onChange={(e) => actualizarInvitado(index, 'children_count', parseInt(e.target.value) || 0)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Total Pases</Label>
+                  <Input
+                    type="number"
+                    value={invitado.passes_count}
+                    readOnly
+                    className="mt-1 bg-gray-100"
                   />
                 </div>
                 <div className="flex items-end space-x-2">

@@ -142,32 +142,41 @@ export type Database = {
       }
       guests: {
         Row: {
+          adults_count: number
+          children_count: number
           created_at: string
           email: string | null
           event_id: string
           id: string
           invitation_code: string
           name: string
+          passes_count: number
           phone: string | null
           qr_code_data: string
         }
         Insert: {
+          adults_count?: number
+          children_count?: number
           created_at?: string
           email?: string | null
           event_id: string
           id?: string
           invitation_code: string
           name: string
+          passes_count?: number
           phone?: string | null
           qr_code_data: string
         }
         Update: {
+          adults_count?: number
+          children_count?: number
           created_at?: string
           email?: string | null
           event_id?: string
           id?: string
           invitation_code?: string
           name?: string
+          passes_count?: number
           phone?: string | null
           qr_code_data?: string
         }
@@ -207,26 +216,35 @@ export type Database = {
       }
       rsvp_responses: {
         Row: {
+          adults_count: number
+          children_count: number
           created_at: string
           event_id: string
           guest_id: string
           id: string
+          passes_count: number
           response: string
           updated_at: string
         }
         Insert: {
+          adults_count?: number
+          children_count?: number
           created_at?: string
           event_id: string
           guest_id: string
           id?: string
+          passes_count?: number
           response: string
           updated_at?: string
         }
         Update: {
+          adults_count?: number
+          children_count?: number
           created_at?: string
           event_id?: string
           guest_id?: string
           id?: string
+          passes_count?: number
           response?: string
           updated_at?: string
         }

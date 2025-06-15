@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,9 @@ export interface Invitado {
   phone: string;
   invitation_code?: string;
   qr_code_data?: string;
+  passes_count: number;
+  adults_count: number;
+  children_count: number;
 }
 
 export interface Evento {
@@ -84,7 +88,13 @@ export const useEditarEvento = (eventoId: string | undefined) => {
 
       setImages(imagesData || []);
 
-      setEvento(eventoData);
+      // Crear objeto evento con las imágenes incluidas
+      const eventoConImagenes: Evento = {
+        ...eventoData,
+        images: imagesData || []
+      };
+
+      setEvento(eventoConImagenes);
       setNombreEvento(eventoData.name);
       setDescripcion(eventoData.description || "");
       setFecha(eventoData.date);
@@ -225,7 +235,10 @@ export const useEditarEvento = (eventoId: string | undefined) => {
             .update({
               name: invitado.name.trim(),
               email: invitado.email?.trim() || null,
-              phone: invitado.phone?.trim() || null
+              phone: invitado.phone?.trim() || null,
+              passes_count: invitado.passes_count,
+              adults_count: invitado.adults_count,
+              children_count: invitado.children_count
             })
             .eq('id', invitado.id);
 
@@ -248,7 +261,10 @@ export const useEditarEvento = (eventoId: string | undefined) => {
               email: invitado.email?.trim() || null,
               phone: invitado.phone?.trim() || null,
               invitation_code: codigoInvitacion,
-              qr_code_data: qrData
+              qr_code_data: qrData,
+              passes_count: invitado.passes_count,
+              adults_count: invitado.adults_count,
+              children_count: invitado.children_count
             });
 
           if (error) throw error;

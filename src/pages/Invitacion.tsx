@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Download, ArrowLeft, XCircle, Check, X } from "lucide-react";
+import { Calendar, MapPin, Clock, Download, ArrowLeft, XCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,9 @@ interface Invitado {
   phone: string;
   invitation_code: string;
   qr_code_data: string;
+  passes_count: number;
+  adults_count: number;
+  children_count: number;
 }
 
 interface Evento {
@@ -29,20 +32,13 @@ interface Evento {
   dress_code: string;
 }
 
-interface RsvpResponse {
-  id: string;
-  response: string;
-}
-
 const Invitacion = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [invitado, setInvitado] = useState<Invitado | null>(null);
   const [evento, setEvento] = useState<Evento | null>(null);
-  const [rsvpResponse, setRsvpResponse] = useState<RsvpResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
   useEffect(() => {
     const codigo = searchParams.get("codigo");
@@ -86,18 +82,6 @@ const Invitacion = () => {
 
       setInvitado(invitadoData);
       setEvento(invitadoData.events);
-
-      // Cargar respuesta RSVP existente
-      const { data: rsvpData } = await supabase
-        .from('rsvp_responses')
-        .select('*')
-        .eq('guest_id', invitadoData.id)
-        .eq('event_id', invitadoData.events.id)
-        .single();
-
-      if (rsvpData) {
-        setRsvpResponse(rsvpData);
-      }
     } catch (error) {
       console.error('Error cargando invitación:', error);
       toast({
@@ -107,60 +91,6 @@ const Invitacion = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const responderInvitacion = async (response: 'attending' | 'not_attending') => {
-    if (!invitado || !evento) return;
-
-    setSubmittingRsvp(true);
-
-    try {
-      if (rsvpResponse) {
-        // Actualizar respuesta existente
-        const { error } = await supabase
-          .from('rsvp_responses')
-          .update({ 
-            response,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', rsvpResponse.id);
-
-        if (error) throw error;
-
-        setRsvpResponse({ ...rsvpResponse, response });
-      } else {
-        // Crear nueva respuesta
-        const { data, error } = await supabase
-          .from('rsvp_responses')
-          .insert({
-            guest_id: invitado.id,
-            event_id: evento.id,
-            response
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        setRsvpResponse(data);
-      }
-
-      toast({
-        title: response === 'attending' ? "¡Confirmado!" : "Respuesta registrada",
-        description: response === 'attending' 
-          ? "Tu asistencia ha sido confirmada" 
-          : "Hemos registrado que no podrás asistir",
-      });
-    } catch (error) {
-      console.error('Error enviando respuesta:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo registrar tu respuesta. Intenta nuevamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubmittingRsvp(false);
     }
   };
 
@@ -263,6 +193,12 @@ const Invitacion = () => {
               <p className="text-xl text-purple-600 font-semibold">
                 Querido/a {invitado.name}
               </p>
+              {invitado.passes_count > 1 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Esta invitación incluye {invitado.passes_count} pases
+                  {invitado.adults_count > 0 && ` (${invitado.adults_count} adulto${invitado.adults_count !== 1 ? 's' : ''}${invitado.children_count > 0 ? `, ${invitado.children_count} niño${invitado.children_count !== 1 ? 's' : ''}` : ''})`}
+                </p>
+              )}
             </CardHeader>
 
             <CardContent className="space-y-6">
@@ -340,72 +276,6 @@ const Invitacion = () => {
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Botones de RSVP */}
-              <div className="bg-white p-6 rounded-lg border-2 border-dashed border-purple-300">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                  ¿Podrás acompañarnos?
-                </h3>
-                
-                {rsvpResponse ? (
-                  <div className="text-center space-y-4">
-                    <div className="flex items-center justify-center space-x-2">
-                      {rsvpResponse.response === 'attending' ? (
-                        <>
-                          <Check className="w-5 h-5 text-green-600" />
-                          <span className="text-green-600 font-medium">Confirmaste tu asistencia</span>
-                        </>
-                      ) : (
-                        <>
-                          <X className="w-5 h-5 text-red-600" />
-                          <span className="text-red-600 font-medium">Confirmaste que no podrás asistir</span>
-                        </>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600">¿Quieres cambiar tu respuesta?</p>
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-600 mb-4">
-                    Por favor confirma tu asistencia
-                  </p>
-                )}
-
-                <div className="flex space-x-4 justify-center">
-                  <Button
-                    onClick={() => responderInvitacion('attending')}
-                    disabled={submittingRsvp}
-                    className={`${
-                      rsvpResponse?.response === 'attending' 
-                        ? 'bg-green-600 hover:bg-green-700' 
-                        : 'bg-green-500 hover:bg-green-600'
-                    }`}
-                  >
-                    {submittingRsvp ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    ) : (
-                      <Check className="w-4 h-4 mr-2" />
-                    )}
-                    Asistiré
-                  </Button>
-                  <Button
-                    onClick={() => responderInvitacion('not_attending')}
-                    disabled={submittingRsvp}
-                    variant="outline"
-                    className={`${
-                      rsvpResponse?.response === 'not_attending' 
-                        ? 'border-red-600 text-red-600 bg-red-50' 
-                        : 'border-red-500 text-red-500 hover:bg-red-50'
-                    }`}
-                  >
-                    {submittingRsvp ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500 mr-2"></div>
-                    ) : (
-                      <X className="w-4 h-4 mr-2" />
-                    )}
-                    No podré asistir
-                  </Button>
-                </div>
               </div>
 
               {/* Código QR */}

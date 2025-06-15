@@ -13,6 +13,9 @@ interface Invitado {
   phone: string;
   invitation_code: string;
   qr_code_data: string;
+  passes_count: number;
+  adults_count: number;
+  children_count: number;
 }
 
 interface Evento {
@@ -131,6 +134,9 @@ const VisualizarInvitacion = () => {
         invitado={invitado}
         evento={evento}
         showRSVP={true}
+        maxPasses={invitado.passes_count}
+        defaultAdults={invitado.adults_count}
+        defaultChildren={invitado.children_count}
       />
     </div>
   );

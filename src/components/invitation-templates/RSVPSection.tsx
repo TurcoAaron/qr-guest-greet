@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, X, Clock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Check, X, Clock, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,23 +12,46 @@ interface RSVPSectionProps {
   guestId: string;
   eventId: string;
   guestName: string;
+  maxPasses?: number;
+  defaultAdults?: number;
+  defaultChildren?: number;
 }
 
 interface RSVPResponse {
   id: string;
   response: string;
+  passes_count: number;
+  adults_count: number;
+  children_count: number;
   created_at: string;
 }
 
-export const RSVPSection = ({ guestId, eventId, guestName }: RSVPSectionProps) => {
+export const RSVPSection = ({ 
+  guestId, 
+  eventId, 
+  guestName, 
+  maxPasses = 1,
+  defaultAdults = 1,
+  defaultChildren = 0
+}: RSVPSectionProps) => {
   const { toast } = useToast();
   const [rsvpResponse, setRsvpResponse] = useState<RSVPResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [adultsCount, setAdultsCount] = useState(defaultAdults);
+  const [childrenCount, setChildrenCount] = useState(defaultChildren);
 
   useEffect(() => {
     loadRSVPResponse();
   }, [guestId, eventId]);
+
+  useEffect(() => {
+    // Actualizar el conteo cuando cambian los valores por defecto
+    if (!rsvpResponse) {
+      setAdultsCount(defaultAdults);
+      setChildrenCount(defaultChildren);
+    }
+  }, [defaultAdults, defaultChildren, rsvpResponse]);
 
   const loadRSVPResponse = async () => {
     try {
@@ -39,7 +64,11 @@ export const RSVPSection = ({ guestId, eventId, guestName }: RSVPSectionProps) =
 
       if (error) throw error;
       
-      setRsvpResponse(data);
+      if (data) {
+        setRsvpResponse(data);
+        setAdultsCount(data.adults_count);
+        setChildrenCount(data.children_count);
+      }
     } catch (error) {
       console.error('Error loading RSVP:', error);
     } finally {
@@ -50,20 +79,49 @@ export const RSVPSection = ({ guestId, eventId, guestName }: RSVPSectionProps) =
   const handleRSVPResponse = async (response: 'attending' | 'not_attending' | 'maybe') => {
     setSubmitting(true);
 
+    const totalPasses = adultsCount + childrenCount;
+
+    if (response === 'attending' && totalPasses > maxPasses) {
+      toast({
+        title: "Error",
+        description: `No puedes seleccionar más de ${maxPasses} pases.`,
+        variant: "destructive",
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    if (response === 'attending' && totalPasses === 0) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar al menos 1 persona para confirmar asistencia.",
+        variant: "destructive",
+      });
+      setSubmitting(false);
+      return;
+    }
+
     try {
+      const rsvpData = {
+        response,
+        passes_count: response === 'attending' ? totalPasses : 0,
+        adults_count: response === 'attending' ? adultsCount : 0,
+        children_count: response === 'attending' ? childrenCount : 0,
+      };
+
       if (rsvpResponse) {
         // Actualizar respuesta existente
         const { error } = await supabase
           .from('rsvp_responses')
           .update({ 
-            response,
+            ...rsvpData,
             updated_at: new Date().toISOString()
           })
           .eq('id', rsvpResponse.id);
 
         if (error) throw error;
 
-        setRsvpResponse({ ...rsvpResponse, response });
+        setRsvpResponse({ ...rsvpResponse, ...rsvpData });
       } else {
         // Crear nueva respuesta
         const { data, error } = await supabase
@@ -71,7 +129,7 @@ export const RSVPSection = ({ guestId, eventId, guestName }: RSVPSectionProps) =
           .insert({
             guest_id: guestId,
             event_id: eventId,
-            response
+            ...rsvpData
           })
           .select()
           .single();
@@ -82,7 +140,7 @@ export const RSVPSection = ({ guestId, eventId, guestName }: RSVPSectionProps) =
       }
 
       const messages = {
-        attending: "¡Confirmado! Tu asistencia ha sido registrada",
+        attending: `¡Confirmado! Tu asistencia ha sido registrada para ${totalPasses} persona${totalPasses > 1 ? 's' : ''}`,
         not_attending: "Hemos registrado que no podrás asistir",
         maybe: "Hemos registrado tu respuesta como 'Tal vez'"
       };
@@ -102,6 +160,8 @@ export const RSVPSection = ({ guestId, eventId, guestName }: RSVPSectionProps) =
       setSubmitting(false);
     }
   };
+
+  const totalPasses = adultsCount + childrenCount;
 
   if (loading) {
     return (
@@ -124,7 +184,9 @@ export const RSVPSection = ({ guestId, eventId, guestName }: RSVPSectionProps) =
               {rsvpResponse.response === 'attending' && (
                 <>
                   <Check className="w-5 h-5 text-green-600" />
-                  <span className="text-green-600 font-medium">Confirmaste tu asistencia</span>
+                  <span className="text-green-600 font-medium">
+                    Confirmaste asistencia para {rsvpResponse.passes_count} persona{rsvpResponse.passes_count > 1 ? 's' : ''}
+                  </span>
                 </>
               )}
               {rsvpResponse.response === 'not_attending' && (
@@ -140,9 +202,52 @@ export const RSVPSection = ({ guestId, eventId, guestName }: RSVPSectionProps) =
                 </>
               )}
             </div>
-            <p className="text-sm text-gray-600">¿Quieres cambiar tu respuesta?</p>
+            {rsvpResponse.response === 'attending' && rsvpResponse.passes_count > 0 && (
+              <p className="text-sm text-gray-600">
+                {rsvpResponse.adults_count} adulto{rsvpResponse.adults_count !== 1 ? 's' : ''} 
+                {rsvpResponse.children_count > 0 && `, ${rsvpResponse.children_count} niño${rsvpResponse.children_count !== 1 ? 's' : ''}`}
+              </p>
+            )}
+            <p className="text-sm text-gray-600 mt-2">¿Quieres cambiar tu respuesta?</p>
           </div>
         )}
+
+        {/* Selector de número de personas */}
+        <div className="mb-6 p-4 bg-white rounded-lg">
+          <div className="flex items-center space-x-2 mb-3">
+            <Users className="w-4 h-4 text-purple-600" />
+            <Label className="text-sm font-medium">Número de asistentes (máx. {maxPasses})</Label>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="adults" className="text-xs text-gray-600">Adultos</Label>
+              <Input
+                id="adults"
+                type="number"
+                min="0"
+                max={maxPasses}
+                value={adultsCount}
+                onChange={(e) => setAdultsCount(Math.max(0, Math.min(maxPasses, parseInt(e.target.value) || 0)))}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="children" className="text-xs text-gray-600">Niños</Label>
+              <Input
+                id="children"
+                type="number"
+                min="0"
+                max={maxPasses}
+                value={childrenCount}
+                onChange={(e) => setChildrenCount(Math.max(0, Math.min(maxPasses - adultsCount, parseInt(e.target.value) || 0)))}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Total: {totalPasses} de {maxPasses} pases
+          </p>
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button
