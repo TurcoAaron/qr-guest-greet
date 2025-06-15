@@ -73,6 +73,7 @@ export const RSVPSection = ({
         setRsvpResponse(data);
         setAdultsCount(data.adults_count);
         setChildrenCount(data.children_count);
+        // Asegurar que pets_count no sea null
         setPetsCount(data.pets_count || 0);
       }
     } catch (error) {
@@ -213,7 +214,7 @@ export const RSVPSection = ({
               <p className="text-sm text-gray-600">
                 {rsvpResponse.adults_count} adulto{rsvpResponse.adults_count !== 1 ? 's' : ''} 
                 {rsvpResponse.children_count > 0 && `, ${rsvpResponse.children_count} niño${rsvpResponse.children_count !== 1 ? 's' : ''}`}
-                {rsvpResponse.pets_count > 0 && `, ${rsvpResponse.pets_count} mascota${rsvpResponse.pets_count !== 1 ? 's' : ''}`}
+                {(rsvpResponse.pets_count || 0) > 0 && `, ${rsvpResponse.pets_count || 0} mascota${(rsvpResponse.pets_count || 0) !== 1 ? 's' : ''}`}
               </p>
             )}
             <p className="text-sm text-gray-600 mt-2">¿Quieres cambiar tu respuesta?</p>
