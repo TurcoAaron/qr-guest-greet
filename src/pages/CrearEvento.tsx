@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +32,7 @@ const CrearEvento = () => {
   const [tipoEvento, setTipoEvento] = useState("");
   const [codigoVestimenta, setCodigoVestimenta] = useState("");
   const [codigoEvento, setCodigoEvento] = useState("");
+  const [templateId, setTemplateId] = useState("modern");
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([
@@ -167,7 +167,8 @@ const CrearEvento = () => {
           event_code: codigoLimpio,
           status: 'upcoming',
           event_type: tipoEvento.trim() || null,
-          dress_code: codigoVestimenta.trim() || null
+          dress_code: codigoVestimenta.trim() || null,
+          template_id: templateId
         })
         .select()
         .single();
@@ -284,7 +285,7 @@ const CrearEvento = () => {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
                 <div>
                   <Label htmlFor="tipo">Tipo de Evento</Label>
                   <Select value={tipoEvento} onValueChange={setTipoEvento}>
@@ -319,6 +320,22 @@ const CrearEvento = () => {
                       <SelectItem value="black-tie">Etiqueta</SelectItem>
                       <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
                       <SelectItem value="theme">Temático</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="template">Template de Invitación</Label>
+                  <Select value={templateId} onValueChange={setTemplateId}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Selecciona el template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="modern">Moderno</SelectItem>
+                      <SelectItem value="elegant">Elegante</SelectItem>
+                      <SelectItem value="festive">Festivo</SelectItem>
+                      <SelectItem value="corporate">Corporativo</SelectItem>
+                      <SelectItem value="minimalist">Minimalista</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

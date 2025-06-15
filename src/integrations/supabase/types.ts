@@ -63,6 +63,7 @@ export type Database = {
           organizer_id: string
           start_date: string | null
           status: string
+          template_id: string | null
           updated_at: string
         }
         Insert: {
@@ -79,6 +80,7 @@ export type Database = {
           organizer_id: string
           start_date?: string | null
           status?: string
+          template_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -95,6 +97,7 @@ export type Database = {
           organizer_id?: string
           start_date?: string | null
           status?: string
+          template_id?: string | null
           updated_at?: string
         }
         Relationships: []

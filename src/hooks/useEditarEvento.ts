@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +25,7 @@ export interface Evento {
   status: string;
   event_type: string;
   dress_code: string;
+  template_id: string;
 }
 
 export const useEditarEvento = (eventoId: string | undefined) => {
@@ -46,6 +46,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
   const [status, setStatus] = useState("upcoming");
   const [tipoEvento, setTipoEvento] = useState("");
   const [codigoVestimenta, setCodigoVestimenta] = useState("");
+  const [templateId, setTemplateId] = useState("modern");
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([]);
@@ -78,6 +79,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
       setStatus(eventoData.status);
       setTipoEvento(eventoData.event_type || "");
       setCodigoVestimenta(eventoData.dress_code || "");
+      setTemplateId(eventoData.template_id || "modern");
 
       // Cargar invitados
       const { data: invitadosData, error: invitadosError } = await supabase
@@ -155,7 +157,8 @@ export const useEditarEvento = (eventoId: string | undefined) => {
           location: ubicacion?.trim() || null,
           status: status,
           event_type: tipoEvento?.trim() || null,
-          dress_code: codigoVestimenta?.trim() || null
+          dress_code: codigoVestimenta?.trim() || null,
+          template_id: templateId
         })
         .eq('id', eventoId);
 
@@ -242,6 +245,8 @@ export const useEditarEvento = (eventoId: string | undefined) => {
     setTipoEvento,
     codigoVestimenta,
     setCodigoVestimenta,
+    templateId,
+    setTemplateId,
     invitados,
     setInvitados,
     // Funciones

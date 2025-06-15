@@ -31,6 +31,8 @@ const EditarEvento = () => {
     setTipoEvento,
     codigoVestimenta,
     setCodigoVestimenta,
+    templateId,
+    setTemplateId,
     invitados,
     setInvitados,
     guardarCambios
@@ -70,6 +72,8 @@ const EditarEvento = () => {
             setTipoEvento={setTipoEvento}
             codigoVestimenta={codigoVestimenta}
             setCodigoVestimenta={setCodigoVestimenta}
+            templateId={templateId}
+            setTemplateId={setTemplateId}
             evento={evento}
           />
 

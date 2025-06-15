@@ -24,7 +24,9 @@ interface EventInfoFormProps {
   setTipoEvento: (value: string) => void;
   codigoVestimenta: string;
   setCodigoVestimenta: (value: string) => void;
-  evento: Evento | null;
+  templateId: string;
+  setTemplateId: (value: string) => void;
+  evento: Evento;
 }
 
 export const EventInfoForm = ({
@@ -44,6 +46,8 @@ export const EventInfoForm = ({
   setTipoEvento,
   codigoVestimenta,
   setCodigoVestimenta,
+  templateId,
+  setTemplateId,
   evento
 }: EventInfoFormProps) => {
   return (
@@ -69,6 +73,23 @@ export const EventInfoForm = ({
           </div>
           
           <div>
+            <Label htmlFor="status">Estado del Evento</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Selecciona el estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="upcoming">Próximo</SelectItem>
+                <SelectItem value="active">Activo</SelectItem>
+                <SelectItem value="completed">Completado</SelectItem>
+                <SelectItem value="cancelled">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-4 gap-6">
+          <div>
             <Label htmlFor="tipo">Tipo de Evento</Label>
             <Select value={tipoEvento} onValueChange={setTipoEvento}>
               <SelectTrigger className="mt-2">
@@ -85,6 +106,55 @@ export const EventInfoForm = ({
                 <SelectItem value="other">Otro</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
+            <Select value={codigoVestimenta} onValueChange={setCodigoVestimenta}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Selecciona el código de vestimenta" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="formal">Formal</SelectItem>
+                <SelectItem value="semi-formal">Semi-formal</SelectItem>
+                <SelectItem value="casual">Casual</SelectItem>
+                <SelectItem value="business">Ejecutivo</SelectItem>
+                <SelectItem value="cocktail">Cocktail</SelectItem>
+                <SelectItem value="black-tie">Etiqueta</SelectItem>
+                <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
+                <SelectItem value="theme">Temático</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="template">Template de Invitación</Label>
+            <Select value={templateId} onValueChange={setTemplateId}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Selecciona el template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="modern">Moderno</SelectItem>
+                <SelectItem value="elegant">Elegante</SelectItem>
+                <SelectItem value="festive">Festivo</SelectItem>
+                <SelectItem value="corporate">Corporativo</SelectItem>
+                <SelectItem value="minimalist">Minimalista</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="codigoEvento">Código del Evento</Label>
+            <Input
+              id="codigoEvento"
+              type="text"
+              value={evento.event_code}
+              disabled
+              className="mt-2 bg-gray-100"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              El código no se puede modificar
+            </p>
           </div>
         </div>
 
@@ -112,52 +182,16 @@ export const EventInfoForm = ({
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="ubicacion">Ubicación</Label>
-            <Input
-              id="ubicacion"
-              type="text"
-              placeholder="Lugar donde se realizará el evento"
-              value={ubicacion}
-              onChange={(e) => setUbicacion(e.target.value)}
-              className="mt-2"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="codigoVestimenta">Código de Vestimenta</Label>
-            <Select value={codigoVestimenta} onValueChange={setCodigoVestimenta}>
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Selecciona el código de vestimenta" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="formal">Formal</SelectItem>
-                <SelectItem value="semi-formal">Semi-formal</SelectItem>
-                <SelectItem value="casual">Casual</SelectItem>
-                <SelectItem value="business">Ejecutivo</SelectItem>
-                <SelectItem value="cocktail">Cocktail</SelectItem>
-                <SelectItem value="black-tie">Etiqueta</SelectItem>
-                <SelectItem value="white-tie">Etiqueta Rigurosa</SelectItem>
-                <SelectItem value="theme">Temático</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
         <div>
-          <Label htmlFor="status">Estado del Evento</Label>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="mt-2">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="upcoming">Próximo</SelectItem>
-              <SelectItem value="active">Activo</SelectItem>
-              <SelectItem value="completed">Completado</SelectItem>
-              <SelectItem value="cancelled">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="ubicacion">Ubicación</Label>
+          <Input
+            id="ubicacion"
+            type="text"
+            placeholder="Lugar donde se realizará el evento"
+            value={ubicacion}
+            onChange={(e) => setUbicacion(e.target.value)}
+            className="mt-2"
+          />
         </div>
 
         <div>
@@ -171,13 +205,6 @@ export const EventInfoForm = ({
             rows={3}
           />
         </div>
-
-        {evento && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <Label className="text-sm font-medium text-gray-700">Código del Evento</Label>
-            <p className="font-mono bg-white px-3 py-2 rounded border mt-1">{evento.event_code}</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
