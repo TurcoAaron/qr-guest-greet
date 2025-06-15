@@ -21,11 +21,36 @@ interface TemplateSelectorProps {
 }
 
 const templates = [
-  { id: 'modern', name: 'Moderno', description: 'Diseño limpio y contemporáneo' },
-  { id: 'elegant', name: 'Elegante', description: 'Sofisticado y clásico' },
-  { id: 'festive', name: 'Festivo', description: 'Colorido y celebrativo' },
-  { id: 'corporate', name: 'Corporativo', description: 'Profesional y ejecutivo' },
-  { id: 'minimalist', name: 'Minimalista', description: 'Simple y funcional' }
+  { 
+    id: 'modern', 
+    name: 'Moderno', 
+    description: 'Diseño limpio y contemporáneo',
+    categories: ['wedding', 'corporate', 'social', 'conference']
+  },
+  { 
+    id: 'elegant', 
+    name: 'Elegante', 
+    description: 'Sofisticado y clásico',
+    categories: ['wedding', 'corporate', 'social']
+  },
+  { 
+    id: 'festive', 
+    name: 'Festivo', 
+    description: 'Colorido y celebrativo',
+    categories: ['birthday', 'social', 'workshop']
+  },
+  { 
+    id: 'corporate', 
+    name: 'Corporativo', 
+    description: 'Profesional y ejecutivo',
+    categories: ['corporate', 'conference', 'seminar']
+  },
+  { 
+    id: 'minimalist', 
+    name: 'Minimalista', 
+    description: 'Simple y funcional',
+    categories: ['wedding', 'corporate', 'social', 'conference', 'workshop', 'seminar']
+  }
 ];
 
 export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData }: TemplateSelectorProps) => {
@@ -52,12 +77,23 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
     dress_code: eventData?.dress_code || "formal"
   };
 
+  // Filtrar templates por tipo de evento
+  const filteredTemplates = eventData?.event_type 
+    ? templates.filter(template => template.categories.includes(eventData.event_type))
+    : templates;
+
   return (
     <div className="space-y-4">
       <Label className="text-sm font-medium">Selecciona un Template</Label>
       
+      {eventData?.event_type && (
+        <p className="text-sm text-gray-600">
+          Mostrando templates recomendados para: <span className="font-medium capitalize">{eventData.event_type}</span>
+        </p>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {templates.map((template) => (
+        {filteredTemplates.map((template) => (
           <Card 
             key={template.id}
             className={`cursor-pointer transition-all hover:shadow-lg ${
@@ -104,7 +140,7 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
       {/* Preview Modal */}
       {previewTemplate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-auto">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">
                 Preview: {templates.find(t => t.id === previewTemplate)?.name}
@@ -117,7 +153,7 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
               </Button>
             </div>
             
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-hidden w-full">
               <TemplateRenderer
                 templateId={previewTemplate}
                 invitado={mockGuest}
