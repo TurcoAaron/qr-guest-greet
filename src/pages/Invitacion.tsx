@@ -12,7 +12,6 @@ interface Invitado {
   name: string;
   email: string;
   phone: string;
-  invitation_code: string;
   qr_code_data: string;
 }
 
@@ -34,7 +33,7 @@ interface RsvpResponse {
 }
 
 const Invitacion = () => {
-  const { invitationCode } = useParams();
+  const { guestId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [invitado, setInvitado] = useState<Invitado | null>(null);
@@ -44,16 +43,16 @@ const Invitacion = () => {
   const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
   useEffect(() => {
-    if (invitationCode) {
-      cargarInvitacion(invitationCode);
+    if (guestId) {
+      cargarInvitacion(guestId);
     } else {
       setLoading(false);
     }
-  }, [invitationCode]);
+  }, [guestId]);
 
-  const cargarInvitacion = async (codigo: string) => {
+  const cargarInvitacion = async (id: string) => {
     try {
-      // Cargar información del invitado por código de invitación
+      // Cargar información del invitado por ID
       const { data: invitadoData, error: invitadoError } = await supabase
         .from('guests')
         .select(`
@@ -70,7 +69,7 @@ const Invitacion = () => {
             dress_code
           )
         `)
-        .eq('invitation_code', codigo)
+        .eq('id', id)
         .single();
 
       if (invitadoError || !invitadoData) {
@@ -218,7 +217,7 @@ const Invitacion = () => {
                 <XCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
                 <h2 className="text-xl font-bold mb-2">Invitación no encontrada</h2>
                 <p className="text-gray-600 mb-6">
-                  No se pudo encontrar la invitación. Verifica que el código sea correcto.
+                  No se pudo encontrar la invitación. Verifica que el ID sea correcto.
                 </p>
                 <Button onClick={() => navigate('/')}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -425,7 +424,7 @@ const Invitacion = () => {
                   Presenta este código QR al llegar al evento
                 </p>
                 <p className="text-xs text-gray-500 font-mono">
-                  Código: {invitado.invitation_code}
+                  ID: {invitado.id}
                 </p>
               </div>
 

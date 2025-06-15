@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [eventoId, setEventoId] = useState('');
-  const [codigoInvitacion, setCodigoInvitacion] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
+  const [guestId, setGuestId] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,10 +52,10 @@ const Index = () => {
   };
 
   const manejarBuscarInvitacion = async () => {
-    if (!codigoInvitacion.trim()) {
+    if (!guestId.trim()) {
       toast({
         title: "Error",
-        description: "Por favor ingresa un código de invitación",
+        description: "Por favor ingresa un ID de invitado",
         variant: "destructive",
       });
       return;
@@ -65,20 +65,20 @@ const Index = () => {
       const { data: invitado, error } = await supabase
         .from('guests')
         .select('*, events(*)')
-        .eq('invitation_code', codigoInvitacion.trim())
+        .eq('id', guestId.trim())
         .single();
 
       if (error || !invitado) {
         toast({
           title: "Invitación no encontrada",
-          description: "No se encontró una invitación con ese código",
+          description: "No se encontró una invitación con ese ID",
           variant: "destructive",
         });
         return;
       }
 
-      // Navegar con el código de invitación como parámetro de ruta
-      navigate(`/invitacion/${invitado.invitation_code}`);
+      // Navegar con el ID del invitado como parámetro de ruta
+      navigate(`/invitacion/${invitado.id}`);
     } catch (error) {
       toast({
         title: "Error",
@@ -89,7 +89,6 @@ const Index = () => {
   };
 
   const iniciarEscaneoQR = () => {
-    setIsScanning(true);
     navigate('/escanear');
   };
 
@@ -138,6 +137,19 @@ const Index = () => {
                   <Search className="w-4 h-4 mr-2" />
                   Buscar Evento
                 </Button>
+                
+                {/* Escáner QR integrado sutilmente */}
+                <div className="pt-2 border-t border-gray-200">
+                  <Button 
+                    onClick={iniciarEscaneoQR}
+                    className="w-full"
+                    size="sm"
+                    variant="outline"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    O escanear código QR
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -153,13 +165,13 @@ const Index = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Código de Invitación
+                    ID de Invitado
                   </label>
                   <Input
                     type="text"
-                    placeholder="Ingresa tu código de invitación"
-                    value={codigoInvitacion}
-                    onChange={(e) => setCodigoInvitacion(e.target.value)}
+                    placeholder="Ingresa tu ID de invitado"
+                    value={guestId}
+                    onChange={(e) => setGuestId(e.target.value)}
                     className="w-full"
                   />
                 </div>
@@ -171,30 +183,6 @@ const Index = () => {
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Consultar Invitación
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* QR Scanner Section */}
-          <div className="mt-12">
-            <Card className="border-0 shadow-lg max-w-md mx-auto">
-              <CardHeader className="text-center">
-                <QrCode className="w-12 h-12 mx-auto text-purple-600 mb-3" />
-                <CardTitle>Escanear Código QR</CardTitle>
-                <p className="text-gray-600 text-sm">
-                  Usa la cámara para escanear códigos QR
-                </p>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={iniciarEscaneoQR}
-                  className="w-full"
-                  size="lg"
-                  variant="secondary"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Abrir Escáner QR
                 </Button>
               </CardContent>
             </Card>
