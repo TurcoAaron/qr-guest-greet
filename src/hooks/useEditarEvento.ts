@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface Invitado {
+export interface Invitado {
   id?: string;
   name: string;
   email: string;
@@ -14,7 +14,7 @@ interface Invitado {
   qr_code_data?: string;
 }
 
-interface Evento {
+export interface Evento {
   id: string;
   name: string;
   description: string;
@@ -249,5 +249,3 @@ export const useEditarEvento = (eventoId: string | undefined) => {
     generarCodigoInvitacion
   };
 };
-
-export type { Invitado, Evento };

@@ -1,11 +1,11 @@
 
 import { useNavigate, useParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Save } from "lucide-react";
 import { useEditarEvento } from "@/hooks/useEditarEvento";
 import { EventInfoForm } from "@/components/events/EventInfoForm";
 import { GuestManagement } from "@/components/events/GuestManagement";
+import { LoadingEvent, EventNotFound } from "@/components/events/LoadingStates";
+import { EventHeader } from "@/components/events/EventHeader";
+import { EventActions } from "@/components/events/EventActions";
 
 const EditarEvento = () => {
   const { eventoId } = useParams();
@@ -36,32 +36,14 @@ const EditarEvento = () => {
     guardarCambios
   } = useEditarEvento(eventoId);
 
+  const handleBack = () => navigate('/dashboard');
+
   if (loadingData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Cargando evento...</p>
-        </div>
-      </div>
-    );
+    return <LoadingEvent />;
   }
 
   if (!evento) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-bold mb-2">Evento no encontrado</h2>
-            <p className="text-gray-600 mb-4">No se pudo encontrar el evento solicitado.</p>
-            <Button onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver al Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <EventNotFound onBack={handleBack} />;
   }
 
   return (
@@ -69,27 +51,8 @@ const EditarEvento = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           
-          {/* Header */}
-          <Card className="mb-8">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/dashboard')}
-                  className="flex items-center space-x-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Volver al Dashboard</span>
-                </Button>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-6 h-6 text-blue-600" />
-                  <CardTitle className="text-2xl">Editar Evento</CardTitle>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
+          <EventHeader onBack={handleBack} />
 
-          {/* Información del evento */}
           <EventInfoForm
             nombreEvento={nombreEvento}
             setNombreEvento={setNombreEvento}
@@ -110,7 +73,6 @@ const EditarEvento = () => {
             evento={evento}
           />
 
-          {/* Lista de invitados */}
           <GuestManagement
             invitados={invitados}
             setInvitados={setInvitados}
@@ -123,32 +85,13 @@ const EditarEvento = () => {
             codigoVestimenta={codigoVestimenta}
           />
 
-          {/* Acciones */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex justify-center space-x-4">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/dashboard')}
-                  disabled={loading}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={guardarCambios}
-                  disabled={loading || !nombreEvento.trim() || !fechaInicio}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  {loading ? "Guardando..." : "Guardar Cambios"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <EventActions
+            loading={loading}
+            nombreEvento={nombreEvento}
+            fechaInicio={fechaInicio}
+            onCancel={handleBack}
+            onSave={guardarCambios}
+          />
         </div>
       </div>
     </div>
