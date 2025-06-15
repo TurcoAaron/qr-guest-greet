@@ -20,7 +20,7 @@ const Administrar = () => {
   const [asistencias, setAsistencias] = useState<string[]>([]);
   const [filtro, setFiltro] = useState("");
   const [eventos, setEventos] = useState<any[]>([]);
-  const [eventoSeleccionado, setEventoSeleccionado] = useState<string>("");
+  const [eventoSeleccionado, setEventoSeleccionado] = useState<string>("todos");
   const [invitados, setInvitados] = useState<any[]>([]);
   const [asistenciasDB, setAsistenciasDB] = useState<any[]>([]);
   const [respuestasRSVP, setRespuestasRSVP] = useState<any[]>([]);
@@ -44,8 +44,8 @@ const Administrar = () => {
       
       if (eventosData) {
         setEventos(eventosData);
-        if (eventosData.length > 0 && !eventoSeleccionado) {
-          setEventoSeleccionado(eventosData[0].id);
+        if (eventosData.length > 0 && eventoSeleccionado === "todos") {
+          // Keep "todos" as default
         }
       }
 
@@ -160,16 +160,18 @@ const Administrar = () => {
   // Estadísticas por evento seleccionado
   const eventoActual = eventos.find(e => e.id === eventoSeleccionado);
   const confirmadosEvento = respuestasRSVP.filter(r => 
-    r.response === 'attending' && r.guests?.event_id === eventoSeleccionado
+    eventoSeleccionado === "todos" ? true : r.response === 'attending' && r.guests?.event_id === eventoSeleccionado
   );
   const presentesEvento = asistenciasDB.filter(a => 
-    a.guests?.event_id === eventoSeleccionado
+    eventoSeleccionado === "todos" ? true : a.guests?.event_id === eventoSeleccionado
   );
 
   const estadisticasEvento = {
     confirmados: confirmadosEvento.length,
     presentes: presentesEvento.length,
-    invitados: invitados.filter(i => i.event_id === eventoSeleccionado).length,
+    invitados: eventoSeleccionado === "todos" 
+      ? invitados.length 
+      : invitados.filter(i => i.event_id === eventoSeleccionado).length,
   };
 
   return (
@@ -204,7 +206,7 @@ const Administrar = () => {
                       <SelectValue placeholder="Selecciona un evento" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los eventos</SelectItem>
+                      <SelectItem value="todos">Todos los eventos</SelectItem>
                       {eventos.map((evento) => (
                         <SelectItem key={evento.id} value={evento.id}>
                           {evento.name} ({evento.status})
@@ -353,7 +355,7 @@ const Administrar = () => {
             </TabsContent>
 
             <TabsContent value="evento" className="space-y-6">
-              {eventoSeleccionado && eventoActual ? (
+              {eventoSeleccionado && eventoSeleccionado !== "todos" && eventoActual ? (
                 <>
                   {/* Header del evento */}
                   <Card>
@@ -475,6 +477,79 @@ const Administrar = () => {
                           </TableBody>
                         </Table>
                       )}
+                    </CardContent>
+                  </Card>
+                </>
+              ) : eventoSeleccionado === "todos" ? (
+                <>
+                  {/* Vista de todos los eventos */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Resumen General de Todos los Eventos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid md:grid-cols-3 gap-6 mb-6">
+                        <Card>
+                          <CardContent className="p-6 text-center">
+                            <Users className="w-8 h-8 mx-auto text-blue-600 mb-2" />
+                            <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.invitados}</div>
+                            <div className="text-sm text-gray-600">Total Invitados</div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardContent className="p-6 text-center">
+                            <UserCheck className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
+                            <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.confirmados}</div>
+                            <div className="text-sm text-gray-600">Total Confirmados</div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardContent className="p-6 text-center">
+                            <UserPlus className="w-8 h-8 mx-auto text-purple-600 mb-2" />
+                            <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.presentes}</div>
+                            <div className="text-sm text-gray-600">Total Presentes</div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Evento</TableHead>
+                            <TableHead>Invitados</TableHead>
+                            <TableHead>Confirmados</TableHead>
+                            <TableHead>Presentes</TableHead>
+                            <TableHead>% Confirmación</TableHead>
+                            <TableHead>% Asistencia</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {eventos.map((evento) => {
+                            const invitadosEvento = invitados.filter(i => i.event_id === evento.id).length;
+                            const confirmadosEvento = respuestasRSVP.filter(r => 
+                              r.response === 'attending' && r.guests?.event_id === evento.id
+                            ).length;
+                            const presentesEvento = asistenciasDB.filter(a => 
+                              a.guests?.event_id === evento.id
+                            ).length;
+                            const porcentajeConfirmacion = invitadosEvento > 0 ? Math.round((confirmadosEvento / invitadosEvento) * 100) : 0;
+                            const porcentajeAsistencia = confirmadosEvento > 0 ? Math.round((presentesEvento / confirmadosEvento) * 100) : 0;
+
+                            return (
+                              <TableRow key={evento.id}>
+                                <TableCell className="font-medium">{evento.name}</TableCell>
+                                <TableCell>{invitadosEvento}</TableCell>
+                                <TableCell>{confirmadosEvento}</TableCell>
+                                <TableCell>{presentesEvento}</TableCell>
+                                <TableCell>{porcentajeConfirmacion}%</TableCell>
+                                <TableCell>{porcentajeAsistencia}%</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
                     </CardContent>
                   </Card>
                 </>
