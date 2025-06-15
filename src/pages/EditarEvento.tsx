@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useEditarEvento } from "@/hooks/useEditarEvento";
 import { EventInfoForm } from "@/components/events/EventInfoForm";
@@ -33,8 +32,8 @@ const EditarEvento = () => {
     setCodigoVestimenta,
     templateId,
     setTemplateId,
-    imageUrl,
-    setImageUrl,
+    images,
+    setImages,
     invitados,
     setInvitados,
     guardarCambios
@@ -76,9 +75,10 @@ const EditarEvento = () => {
             setCodigoVestimenta={setCodigoVestimenta}
             templateId={templateId}
             setTemplateId={setTemplateId}
-            imageUrl={imageUrl}
-            setImageUrl={setImageUrl}
+            images={images}
+            setImages={setImages}
             evento={evento}
+            loading={loading}
           />
 
           <GuestManagement

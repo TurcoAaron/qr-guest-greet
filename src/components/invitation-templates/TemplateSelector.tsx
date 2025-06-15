@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -109,7 +108,7 @@ export const TemplateSelector = ({ selectedTemplate, onTemplateSelect, eventData
             <CardContent className="p-4">
               {/* Miniatura del template con ancho completo */}
               <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                <div className="scale-[0.25] origin-top-left w-[400px] h-[600px] absolute -top-4 -left-4">
+                <div className="absolute top-0 left-0 w-[200%] h-[300%] origin-top-left transform scale-[0.5]">
                   <TemplateRenderer
                     templateId={template.id}
                     invitado={mockGuest}

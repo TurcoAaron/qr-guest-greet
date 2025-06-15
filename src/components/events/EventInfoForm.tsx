@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalendarDays, MapPin, Clock, Palette, Image as ImageIcon } from "lucide-react";
 import { TemplateSelector } from "../invitation-templates/TemplateSelector";
 import { ImageUploader } from "./ImageUploader";
+import type { EventImage } from "@/types/event";
 
 interface EventInfoFormProps {
   nombreEvento: string;
@@ -27,9 +27,10 @@ interface EventInfoFormProps {
   setCodigoVestimenta: (value: string) => void;
   templateId: string;
   setTemplateId: (value: string) => void;
-  imageUrl: string;
-  setImageUrl: (value: string) => void;
+  images: EventImage[];
+  setImages: (value: EventImage[]) => void;
   evento?: any;
+  loading: boolean;
 }
 
 export const EventInfoForm = ({
@@ -51,9 +52,10 @@ export const EventInfoForm = ({
   setCodigoVestimenta,
   templateId,
   setTemplateId,
-  imageUrl,
-  setImageUrl,
-  evento
+  images,
+  setImages,
+  evento,
+  loading
 }: EventInfoFormProps) => {
   return (
     <div className="space-y-8">
@@ -107,19 +109,19 @@ export const EventInfoForm = ({
         </CardContent>
       </Card>
 
-      {/* Imagen del evento */}
+      {/* Imagenes del evento */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <ImageIcon className="w-5 h-5" />
-            <span>Imagen del Evento</span>
+            <span>Imágenes del Evento</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ImageUploader
-            onImageUploaded={setImageUrl}
-            currentImageUrl={imageUrl}
-            onImageRemoved={() => setImageUrl("")}
+            images={images}
+            setImages={setImages}
+            uploading={loading}
           />
         </CardContent>
       </Card>
@@ -239,7 +241,7 @@ export const EventInfoForm = ({
               location: ubicacion,
               event_type: tipoEvento,
               dress_code: codigoVestimenta,
-              image_url: imageUrl
+              image_url: images.find(img => img.preference === 0)?.image_url
             }}
           />
         </CardContent>

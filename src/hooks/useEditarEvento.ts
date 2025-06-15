@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { EventImage } from "@/types/event";
 
 export interface Invitado {
   id?: string;
@@ -27,7 +27,8 @@ export interface Evento {
   event_type: string;
   dress_code: string;
   template_id: string;
-  image_url: string;
+  image_url: string; // URL de la imagen principal
+  images: EventImage[]; // Todas las imágenes
 }
 
 export const useEditarEvento = (eventoId: string | undefined) => {
@@ -49,7 +50,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
   const [tipoEvento, setTipoEvento] = useState("");
   const [codigoVestimenta, setCodigoVestimenta] = useState("");
   const [templateId, setTemplateId] = useState("modern");
-  const [imageUrl, setImageUrl] = useState("");
+  const [images, setImages] = useState<EventImage[]>([]);
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([]);
@@ -72,6 +73,17 @@ export const useEditarEvento = (eventoId: string | undefined) => {
 
       if (eventoError) throw eventoError;
 
+      // Cargar imágenes del evento
+      const { data: imagesData, error: imagesError } = await supabase
+        .from('event_images')
+        .select('id, image_url, preference')
+        .eq('event_id', eventoId)
+        .order('preference', { ascending: true });
+
+      if (imagesError) throw imagesError;
+
+      setImages(imagesData || []);
+
       setEvento(eventoData);
       setNombreEvento(eventoData.name);
       setDescripcion(eventoData.description || "");
@@ -83,7 +95,6 @@ export const useEditarEvento = (eventoId: string | undefined) => {
       setTipoEvento(eventoData.event_type || "");
       setCodigoVestimenta(eventoData.dress_code || "");
       setTemplateId(eventoData.template_id || "modern");
-      setImageUrl(eventoData.image_url || "");
 
       // Cargar invitados
       const { data: invitadosData, error: invitadosError } = await supabase
@@ -149,7 +160,31 @@ export const useEditarEvento = (eventoId: string | undefined) => {
     setLoading(true);
 
     try {
-      // Actualizar evento
+      // 1. Subir nuevas imágenes a Supabase Storage
+      const processedImages = await Promise.all(
+        images.map(async (image) => {
+          if (image.file) {
+            const fileExt = image.file.name.split('.').pop();
+            const fileName = `${eventoId}-${Date.now()}-${Math.random()}.${fileExt}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('event-images')
+              .upload(fileName, image.file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = supabase.storage
+              .from('event-images')
+              .getPublicUrl(uploadData.path);
+            
+            return { ...image, image_url: urlData.publicUrl, file: undefined };
+          }
+          return image;
+        })
+      );
+
+      // 2. Actualizar evento
+      const primaryImageUrl = processedImages.sort((a, b) => a.preference - b.preference)[0]?.image_url || null;
+
       const { error: errorEvento } = await supabase
         .from('events')
         .update({
@@ -163,11 +198,23 @@ export const useEditarEvento = (eventoId: string | undefined) => {
           event_type: tipoEvento?.trim() || null,
           dress_code: codigoVestimenta?.trim() || null,
           template_id: templateId,
-          image_url: imageUrl || null
+          image_url: primaryImageUrl
         })
         .eq('id', eventoId);
 
       if (errorEvento) throw errorEvento;
+
+      // 3. Borrar imágenes antiguas y guardar la nueva lista
+      await supabase.from('event_images').delete().eq('event_id', eventoId);
+
+      if (processedImages.length > 0) {
+        const imageInserts = processedImages.map(img => ({
+          event_id: eventoId,
+          image_url: img.image_url,
+          preference: img.preference,
+        }));
+        await supabase.from('event_images').insert(imageInserts);
+      }
 
       // Procesar invitados
       for (const [index, invitado] of invitadosValidos.entries()) {
@@ -252,8 +299,8 @@ export const useEditarEvento = (eventoId: string | undefined) => {
     setCodigoVestimenta,
     templateId,
     setTemplateId,
-    imageUrl,
-    setImageUrl,
+    images,
+    setImages,
     invitados,
     setInvitados,
     // Funciones

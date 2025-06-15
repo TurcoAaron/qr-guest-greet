@@ -48,6 +48,41 @@ export type Database = {
           },
         ]
       }
+      event_images: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          image_url: string
+          preference: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          image_url: string
+          preference?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          image_url?: string
+          preference?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_event_images_event_id"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string

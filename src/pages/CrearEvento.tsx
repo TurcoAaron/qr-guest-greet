@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, CalendarDays, MapPin, Clock, Palette, Users, Plus, Trash2, Image as ImageIcon } from "lucide-react";
 import { TemplateSelector } from "@/components/invitation-templates/TemplateSelector";
 import { ImageUploader } from "@/components/events/ImageUploader";
+import type { EventImage } from "@/types/event";
 
 interface Invitado {
   name: string;
@@ -34,7 +35,7 @@ const CrearEvento = () => {
   const [tipoEvento, setTipoEvento] = useState("");
   const [codigoVestimenta, setCodigoVestimenta] = useState("");
   const [templateId, setTemplateId] = useState("modern");
-  const [imageUrl, setImageUrl] = useState("");
+  const [images, setImages] = useState<EventImage[]>([]);
   
   // Estado de invitados
   const [invitados, setInvitados] = useState<Invitado[]>([]);
@@ -101,6 +102,9 @@ const CrearEvento = () => {
 
     try {
       const codigoEvento = generarCodigoEvento();
+      const primaryImageUrl = images.sort((a,b) => a.preference - b.preference)[0]?.file
+        ? 'placeholder' // We need an ID before we can generate a permanent URL.
+        : null;
 
       const { data: eventoData, error: errorEvento } = await supabase
         .from('events')
@@ -117,12 +121,47 @@ const CrearEvento = () => {
           event_type: tipoEvento?.trim() || null,
           dress_code: codigoVestimenta?.trim() || null,
           template_id: templateId,
-          image_url: imageUrl || null
+          image_url: primaryImageUrl
         })
         .select()
         .single();
 
       if (errorEvento) throw errorEvento;
+
+      // Subir imágenes y guardar en DB
+      if (images.length > 0) {
+        const uploadedImages = await Promise.all(
+          images.map(async (image) => {
+            if (image.file) {
+              const fileExt = image.file.name.split('.').pop();
+              const fileName = `${eventoData.id}-${Date.now()}.${fileExt}`;
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('event-images')
+                .upload(fileName, image.file);
+
+              if (uploadError) throw uploadError;
+
+              const { data: urlData } = supabase.storage
+                .from('event-images')
+                .getPublicUrl(uploadData.path);
+              
+              return { ...image, image_url: urlData.publicUrl };
+            }
+            return image;
+          })
+        );
+        
+        const primaryUrl = uploadedImages.sort((a,b) => a.preference - b.preference)[0]?.image_url || null;
+        await supabase.from('events').update({ image_url: primaryUrl }).eq('id', eventoData.id);
+
+        const imageInserts = uploadedImages.map(img => ({
+          event_id: eventoData.id,
+          image_url: img.image_url,
+          preference: img.preference,
+        }));
+
+        await supabase.from('event_images').insert(imageInserts);
+      }
 
       // Crear invitados si hay alguno
       if (invitadosValidos.length > 0) {
@@ -247,14 +286,14 @@ const CrearEvento = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <ImageIcon className="w-5 h-5" />
-                  <span>Imagen del Evento</span>
+                  <span>Imágenes del Evento</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ImageUploader
-                  onImageUploaded={setImageUrl}
-                  currentImageUrl={imageUrl}
-                  onImageRemoved={() => setImageUrl("")}
+                  images={images}
+                  setImages={setImages}
+                  uploading={loading}
                 />
               </CardContent>
             </Card>
@@ -347,7 +386,7 @@ const CrearEvento = () => {
                     location: ubicacion,
                     event_type: tipoEvento,
                     dress_code: codigoVestimenta,
-                    image_url: imageUrl
+                    image_url: images.find(img => img.preference === 0)?.image_url
                   }}
                 />
               </CardContent>
