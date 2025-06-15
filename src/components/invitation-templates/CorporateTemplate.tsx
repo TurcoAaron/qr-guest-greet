@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette, Building2 } from "lucide-react";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
 
 interface CorporateTemplateProps {
@@ -172,7 +172,6 @@ export const CorporateTemplate = ({ invitado, evento, showRSVP = false }: Corpor
             <RSVPSection 
               eventId={evento.id} 
               guestId={invitado.id}
-              eventName={evento.name}
               guestName={invitado.name}
             />
           </div>
@@ -184,7 +183,7 @@ export const CorporateTemplate = ({ invitado, evento, showRSVP = false }: Corpor
             <h3 className="text-xl font-semibold text-slate-800 mb-6">Código de Acceso</h3>
             
             <div className="flex justify-center mb-4">
-              <QRCode 
+              <QRCodeSVG 
                 value={invitado.qr_code_data} 
                 size={150}
                 className="border-2 border-slate-300 shadow-lg rounded-lg"

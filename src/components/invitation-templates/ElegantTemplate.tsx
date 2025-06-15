@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette } from "lucide-react";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
 
 interface ElegantTemplateProps {
@@ -162,7 +162,6 @@ export const ElegantTemplate = ({ invitado, evento, showRSVP = false }: ElegantT
             <RSVPSection 
               eventId={evento.id} 
               guestId={invitado.id}
-              eventName={evento.name}
               guestName={invitado.name}
             />
           </div>
@@ -174,7 +173,7 @@ export const ElegantTemplate = ({ invitado, evento, showRSVP = false }: ElegantT
             <div className="bg-white rounded-lg shadow-lg p-8 border border-amber-200 inline-block">
               <h3 className="text-xl font-serif text-amber-800 mb-4">Código de Acceso</h3>
               <div className="flex justify-center mb-4">
-                <QRCode 
+                <QRCodeSVG 
                   value={invitado.qr_code_data} 
                   size={150}
                   className="border-4 border-amber-200 shadow-lg rounded-lg"

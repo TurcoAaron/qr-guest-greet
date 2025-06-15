@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette } from "lucide-react";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
 
 interface ModernTemplateProps {
@@ -155,7 +155,6 @@ export const ModernTemplate = ({ invitado, evento, showRSVP = false }: ModernTem
           <RSVPSection 
             eventId={evento.id} 
             guestId={invitado.id}
-            eventName={evento.name}
             guestName={invitado.name}
           />
         )}
@@ -165,7 +164,7 @@ export const ModernTemplate = ({ invitado, evento, showRSVP = false }: ModernTem
           <div className="text-center bg-gray-50 rounded-xl p-8">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Código de Acceso</h3>
             <div className="flex justify-center mb-4">
-              <QRCode 
+              <QRCodeSVG 
                 value={invitado.qr_code_data} 
                 size={150}
                 className="border-4 border-white shadow-lg rounded-lg"

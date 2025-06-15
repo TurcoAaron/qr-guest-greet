@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette, PartyPopper } from "lucide-react";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
 
 interface FestiveTemplateProps {
@@ -181,7 +181,6 @@ export const FestiveTemplate = ({ invitado, evento, showRSVP = false }: FestiveT
             <RSVPSection 
               eventId={evento.id} 
               guestId={invitado.id}
-              eventName={evento.name}
               guestName={invitado.name}
             />
           </div>
@@ -198,7 +197,7 @@ export const FestiveTemplate = ({ invitado, evento, showRSVP = false }: FestiveT
               
               <h3 className="text-2xl font-bold text-purple-800 mb-4">Tu Pase Mágico ✨</h3>
               <div className="flex justify-center mb-4">
-                <QRCode 
+                <QRCodeSVG 
                   value={invitado.qr_code_data} 
                   size={150}
                   className="border-4 border-purple-300 shadow-lg rounded-lg"

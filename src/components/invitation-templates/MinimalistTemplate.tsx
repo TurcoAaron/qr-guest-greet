@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Palette } from "lucide-react";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { RSVPSection } from "./RSVPSection";
 
 interface MinimalistTemplateProps {
@@ -142,7 +142,6 @@ export const MinimalistTemplate = ({ invitado, evento, showRSVP = false }: Minim
             <RSVPSection 
               eventId={evento.id} 
               guestId={invitado.id}
-              eventName={evento.name}
               guestName={invitado.name}
             />
           </div>
@@ -154,7 +153,7 @@ export const MinimalistTemplate = ({ invitado, evento, showRSVP = false }: Minim
             <h3 className="text-sm uppercase tracking-wide text-gray-500 mb-6">Acceso</h3>
             
             <div className="flex justify-center mb-4">
-              <QRCode 
+              <QRCodeSVG 
                 value={invitado.qr_code_data} 
                 size={120}
                 className="border border-gray-200"
