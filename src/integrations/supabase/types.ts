@@ -55,6 +55,7 @@ export type Database = {
           description: string | null
           dress_code: string | null
           end_date: string | null
+          event_code: string
           event_type: string | null
           id: string
           location: string | null
@@ -70,6 +71,7 @@ export type Database = {
           description?: string | null
           dress_code?: string | null
           end_date?: string | null
+          event_code: string
           event_type?: string | null
           id?: string
           location?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           description?: string | null
           dress_code?: string | null
           end_date?: string | null
+          event_code?: string
           event_type?: string | null
           id?: string
           location?: string | null
@@ -102,6 +105,7 @@ export type Database = {
           email: string | null
           event_id: string
           id: string
+          invitation_code: string
           name: string
           phone: string | null
           qr_code_data: string
@@ -111,6 +115,7 @@ export type Database = {
           email?: string | null
           event_id: string
           id?: string
+          invitation_code: string
           name: string
           phone?: string | null
           qr_code_data: string
@@ -120,6 +125,7 @@ export type Database = {
           email?: string | null
           event_id?: string
           id?: string
+          invitation_code?: string
           name?: string
           phone?: string | null
           qr_code_data?: string

@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, Download, ArrowLeft, XCircle, Check, X } from "lucide-react";
@@ -12,6 +13,7 @@ interface Invitado {
   name: string;
   email: string;
   phone: string;
+  invitation_code: string;
   qr_code_data: string;
 }
 
@@ -33,7 +35,7 @@ interface RsvpResponse {
 }
 
 const Invitacion = () => {
-  const { guestId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [invitado, setInvitado] = useState<Invitado | null>(null);
@@ -43,16 +45,17 @@ const Invitacion = () => {
   const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
   useEffect(() => {
-    if (guestId) {
-      cargarInvitacion(guestId);
+    const codigo = searchParams.get("codigo");
+    if (codigo) {
+      cargarInvitacion(codigo);
     } else {
       setLoading(false);
     }
-  }, [guestId]);
+  }, [searchParams]);
 
-  const cargarInvitacion = async (id: string) => {
+  const cargarInvitacion = async (codigo: string) => {
     try {
-      // Cargar información del invitado por ID
+      // Cargar información del invitado
       const { data: invitadoData, error: invitadoError } = await supabase
         .from('guests')
         .select(`
@@ -69,7 +72,7 @@ const Invitacion = () => {
             dress_code
           )
         `)
-        .eq('id', id)
+        .eq('invitation_code', codigo)
         .single();
 
       if (invitadoError || !invitadoData) {
@@ -217,7 +220,7 @@ const Invitacion = () => {
                 <XCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
                 <h2 className="text-xl font-bold mb-2">Invitación no encontrada</h2>
                 <p className="text-gray-600 mb-6">
-                  No se pudo encontrar la invitación. Verifica que el ID sea correcto.
+                  No se pudo encontrar la invitación. Verifica que el código sea correcto.
                 </p>
                 <Button onClick={() => navigate('/')}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -424,7 +427,7 @@ const Invitacion = () => {
                   Presenta este código QR al llegar al evento
                 </p>
                 <p className="text-xs text-gray-500 font-mono">
-                  ID: {invitado.id}
+                  Código: {invitado.invitation_code}
                 </p>
               </div>
 
