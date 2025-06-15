@@ -15,6 +15,7 @@ interface RSVPSectionProps {
   maxPasses?: number;
   defaultAdults?: number;
   defaultChildren?: number;
+  defaultPets?: number;
 }
 
 interface RSVPResponse {
@@ -23,6 +24,7 @@ interface RSVPResponse {
   passes_count: number;
   adults_count: number;
   children_count: number;
+  pets_count?: number;
   created_at: string;
 }
 
@@ -32,7 +34,8 @@ export const RSVPSection = ({
   guestName, 
   maxPasses = 1,
   defaultAdults = 1,
-  defaultChildren = 0
+  defaultChildren = 0,
+  defaultPets = 0
 }: RSVPSectionProps) => {
   const { toast } = useToast();
   const [rsvpResponse, setRsvpResponse] = useState<RSVPResponse | null>(null);
@@ -40,6 +43,7 @@ export const RSVPSection = ({
   const [submitting, setSubmitting] = useState(false);
   const [adultsCount, setAdultsCount] = useState(defaultAdults);
   const [childrenCount, setChildrenCount] = useState(defaultChildren);
+  const [petsCount, setPetsCount] = useState(defaultPets);
 
   useEffect(() => {
     loadRSVPResponse();
@@ -50,8 +54,9 @@ export const RSVPSection = ({
     if (!rsvpResponse) {
       setAdultsCount(defaultAdults);
       setChildrenCount(defaultChildren);
+      setPetsCount(defaultPets);
     }
-  }, [defaultAdults, defaultChildren, rsvpResponse]);
+  }, [defaultAdults, defaultChildren, defaultPets, rsvpResponse]);
 
   const loadRSVPResponse = async () => {
     try {
@@ -68,6 +73,7 @@ export const RSVPSection = ({
         setRsvpResponse(data);
         setAdultsCount(data.adults_count);
         setChildrenCount(data.children_count);
+        setPetsCount(data.pets_count || 0);
       }
     } catch (error) {
       console.error('Error loading RSVP:', error);
@@ -79,7 +85,7 @@ export const RSVPSection = ({
   const handleRSVPResponse = async (response: 'attending' | 'not_attending' | 'maybe') => {
     setSubmitting(true);
 
-    const totalPasses = adultsCount + childrenCount;
+    const totalPasses = adultsCount + childrenCount + petsCount;
 
     if (response === 'attending' && totalPasses > maxPasses) {
       toast({
@@ -107,6 +113,7 @@ export const RSVPSection = ({
         passes_count: response === 'attending' ? totalPasses : 0,
         adults_count: response === 'attending' ? adultsCount : 0,
         children_count: response === 'attending' ? childrenCount : 0,
+        pets_count: response === 'attending' ? petsCount : 0,
       };
 
       if (rsvpResponse) {
@@ -161,7 +168,7 @@ export const RSVPSection = ({
     }
   };
 
-  const totalPasses = adultsCount + childrenCount;
+  const totalPasses = adultsCount + childrenCount + petsCount;
 
   if (loading) {
     return (
@@ -206,6 +213,7 @@ export const RSVPSection = ({
               <p className="text-sm text-gray-600">
                 {rsvpResponse.adults_count} adulto{rsvpResponse.adults_count !== 1 ? 's' : ''} 
                 {rsvpResponse.children_count > 0 && `, ${rsvpResponse.children_count} niño${rsvpResponse.children_count !== 1 ? 's' : ''}`}
+                {rsvpResponse.pets_count > 0 && `, ${rsvpResponse.pets_count} mascota${rsvpResponse.pets_count !== 1 ? 's' : ''}`}
               </p>
             )}
             <p className="text-sm text-gray-600 mt-2">¿Quieres cambiar tu respuesta?</p>
@@ -218,7 +226,7 @@ export const RSVPSection = ({
             <Users className="w-4 h-4 text-purple-600" />
             <Label className="text-sm font-medium">Número de asistentes (máx. {maxPasses})</Label>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="adults" className="text-xs text-gray-600">Adultos</Label>
               <Input
@@ -240,6 +248,18 @@ export const RSVPSection = ({
                 max={maxPasses}
                 value={childrenCount}
                 onChange={(e) => setChildrenCount(Math.max(0, Math.min(maxPasses - adultsCount, parseInt(e.target.value) || 0)))}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pets" className="text-xs text-gray-600">Mascotas</Label>
+              <Input
+                id="pets"
+                type="number"
+                min="0"
+                max={maxPasses}
+                value={petsCount}
+                onChange={(e) => setPetsCount(Math.max(0, Math.min(maxPasses - adultsCount - childrenCount, parseInt(e.target.value) || 0)))}
                 className="mt-1"
               />
             </div>
