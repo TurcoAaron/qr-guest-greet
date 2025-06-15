@@ -24,9 +24,21 @@ interface MinimalistTemplateProps {
     image_url?: string;
   };
   showRSVP?: boolean;
+  maxPasses?: number;
+  defaultAdults?: number;
+  defaultChildren?: number;
+  defaultPets?: number;
 }
 
-export const MinimalistTemplate = ({ invitado, evento, showRSVP = false }: MinimalistTemplateProps) => {
+export const MinimalistTemplate = ({ 
+  invitado, 
+  evento, 
+  showRSVP = false,
+  maxPasses = 1,
+  defaultAdults = 1,
+  defaultChildren = 0,
+  defaultPets = 0
+}: MinimalistTemplateProps) => {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -143,6 +155,10 @@ export const MinimalistTemplate = ({ invitado, evento, showRSVP = false }: Minim
               eventId={evento.id} 
               guestId={invitado.id}
               guestName={invitado.name}
+              maxPasses={maxPasses}
+              defaultAdults={defaultAdults}
+              defaultChildren={defaultChildren}
+              defaultPets={defaultPets}
             />
           </div>
         )}

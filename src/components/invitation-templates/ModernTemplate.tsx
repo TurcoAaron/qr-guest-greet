@@ -36,9 +36,9 @@ export const ModernTemplate = ({
   invitado, 
   evento, 
   showRSVP = false,
-  maxPasses,
-  defaultAdults,
-  defaultChildren,
+  maxPasses = 1,
+  defaultAdults = 1,
+  defaultChildren = 0,
   defaultPets = 0
 }: ModernTemplateProps) => {
   const formatDate = (dateString: string) => {
@@ -109,8 +109,10 @@ export const ModernTemplate = ({
           </p>
         </div>
 
-        {/* Cuenta regresiva */}
-        <CountdownTimer targetDate={evento.start_date} className="mb-12" />
+        {/* Cuenta regresiva - Asegurar que se muestre */}
+        {evento.start_date && (
+          <CountdownTimer targetDate={evento.start_date} className="mb-12" />
+        )}
 
         {/* Detalles del evento */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">
