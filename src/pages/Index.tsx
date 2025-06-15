@@ -7,104 +7,13 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+import AsistenciaCard from "@/components/home/AsistenciaCard";
+import InvitacionCard from "@/components/home/InvitacionCard";
+import QrScannerCard from "@/components/home/QrScannerCard";
+import FeaturesSection from "@/components/home/FeaturesSection";
+
 const Index = () => {
-  const [codigoEvento, setCodigoEvento] = useState('');
-  const [codigoInvitacion, setCodigoInvitacion] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const manejarBuscarEvento = async () => {
-    if (!codigoEvento.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa un código de evento",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { data: evento, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('event_code', codigoEvento.trim().toUpperCase())
-        .single();
-
-      if (error || !evento) {
-        toast({
-          title: "Evento no encontrado",
-          description: "No se encontró un evento con ese código",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      navigate(`/tomar-asistencia/${evento.id}`);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error al buscar el evento",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const manejarBuscarInvitacion = async () => {
-    if (!codigoInvitacion.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa un código de invitación",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const codigo = codigoInvitacion.trim().toUpperCase();
-    try {
-      // Registrar en consola el código buscado
-      console.log("Buscando invitación para código:", codigo);
-      const { data: invitado, error } = await supabase
-        .from('guests')
-        .select('*, events(*)')
-        .eq('invitation_code', codigo)
-        .maybeSingle();
-
-      console.log("Resultado invitado:", invitado, "Error:", error);
-
-      if (error || !invitado) {
-        toast({
-          title: "Invitación no encontrada",
-          description: "No se encontró una invitación con ese código. Verifica que el código sea correcto y en mayúsculas.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!invitado.events) {
-        toast({
-          title: "Evento no encontrado",
-          description: "La invitación está asociada a un evento que no existe.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Redirigir usando el parámetro de query
-      navigate(`/invitacion?codigo=${encodeURIComponent(codigo)}`);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error al buscar la invitación",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const iniciarEscaneoQR = () => {
-    setIsScanning(true);
-    navigate('/escanear');
-  };
+  // Solo renderización, sin lógica aquí
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -117,149 +26,18 @@ const Index = () => {
           <p className="text-xl text-gray-600 mb-12">
             Sistema completo de gestión de eventos y asistencias
           </p>
-          
           {/* Action Cards */}
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            
-            {/* Tomar Asistencia */}
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="text-center pb-6">
-                <Users className="w-16 h-16 mx-auto text-blue-600 mb-4" />
-                <CardTitle className="text-2xl">Tomar Asistencia</CardTitle>
-                <p className="text-gray-600">
-                  Registra la asistencia para un evento específico
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Código del Evento
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Ej: CONF2024"
-                    value={codigoEvento}
-                    onChange={(e) => setCodigoEvento(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <Button 
-                  onClick={manejarBuscarEvento}
-                  className="w-full"
-                  size="lg"
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  Buscar Evento
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Consultar Invitación */}
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="text-center pb-6">
-                <Calendar className="w-16 h-16 mx-auto text-green-600 mb-4" />
-                <CardTitle className="text-2xl">Consultar Invitación</CardTitle>
-                <p className="text-gray-600">
-                  Consulta los detalles de tu invitación
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Código de Invitación
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Ingresa tu código de invitación"
-                    value={codigoInvitacion}
-                    onChange={(e) => setCodigoInvitacion(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <Button 
-                  onClick={manejarBuscarInvitacion}
-                  className="w-full"
-                  size="lg"
-                  variant="outline"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Consultar Invitación
-                </Button>
-              </CardContent>
-            </Card>
+            <AsistenciaCard />
+            <InvitacionCard />
           </div>
-
           {/* QR Scanner Section */}
           <div className="mt-12">
-            <Card className="border-0 shadow-lg max-w-md mx-auto">
-              <CardHeader className="text-center">
-                <QrCode className="w-12 h-12 mx-auto text-purple-600 mb-3" />
-                <CardTitle>Escanear Código QR</CardTitle>
-                <p className="text-gray-600 text-sm">
-                  Usa la cámara para escanear códigos QR
-                </p>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={iniciarEscaneoQR}
-                  className="w-full"
-                  size="lg"
-                  variant="secondary"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Abrir Escáner QR
-                </Button>
-              </CardContent>
-            </Card>
+            <QrScannerCard />
           </div>
         </div>
       </div>
-
-      {/* Features Section */}
-      <div className="bg-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              ¿Por qué usar EventManager?
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Una solución completa para la gestión de eventos, desde la creación hasta el control de asistencias
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Gestión Fácil</h3>
-              <p className="text-gray-600">
-                Crea y administra eventos de manera intuitiva y eficiente
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <QrCode className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Códigos QR</h3>
-              <p className="text-gray-600">
-                Genera códigos QR únicos para cada invitado y evento
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Control Total</h3>
-              <p className="text-gray-600">
-                Monitorea asistencias en tiempo real con reportes detallados
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FeaturesSection />
     </div>
   );
 };
