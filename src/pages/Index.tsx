@@ -77,8 +77,8 @@ const Index = () => {
         return;
       }
 
-      // Navegar con el ID del invitado como parámetro de ruta
-      navigate(`/invitacion/${invitado.id}`);
+      // Navegar con el código de invitación como parámetro de ruta
+      navigate(`/invitacion/${invitado.invitation_code}`);
     } catch (error) {
       toast({
         title: "Error",

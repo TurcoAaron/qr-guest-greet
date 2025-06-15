@@ -34,7 +34,7 @@ interface RsvpResponse {
 }
 
 const Invitacion = () => {
-  const { guestId } = useParams();
+  const { invitationCode } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [invitado, setInvitado] = useState<Invitado | null>(null);
@@ -44,16 +44,16 @@ const Invitacion = () => {
   const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
   useEffect(() => {
-    if (guestId) {
-      cargarInvitacion(guestId);
+    if (invitationCode) {
+      cargarInvitacion(invitationCode);
     } else {
       setLoading(false);
     }
-  }, [guestId]);
+  }, [invitationCode]);
 
-  const cargarInvitacion = async (id: string) => {
+  const cargarInvitacion = async (codigo: string) => {
     try {
-      // Cargar información del invitado por ID
+      // Cargar información del invitado por código de invitación
       const { data: invitadoData, error: invitadoError } = await supabase
         .from('guests')
         .select(`
@@ -70,7 +70,7 @@ const Invitacion = () => {
             dress_code
           )
         `)
-        .eq('id', id)
+        .eq('invitation_code', codigo)
         .single();
 
       if (invitadoError || !invitadoData) {
@@ -218,7 +218,7 @@ const Invitacion = () => {
                 <XCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
                 <h2 className="text-xl font-bold mb-2">Invitación no encontrada</h2>
                 <p className="text-gray-600 mb-6">
-                  No se pudo encontrar la invitación. Verifica que el enlace sea correcto.
+                  No se pudo encontrar la invitación. Verifica que el código sea correcto.
                 </p>
                 <Button onClick={() => navigate('/')}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
