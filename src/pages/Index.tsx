@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,12 +90,8 @@ const Index = () => {
         return;
       }
 
-      navigate('/invitacion', { 
-        state: { 
-          guest: invitado,
-          event: invitado.events 
-        } 
-      });
+      // Redirigir usando el parámetro de query
+      navigate(`/invitacion?codigo=${encodeURIComponent(codigo)}`);
     } catch (error) {
       toast({
         title: "Error",
