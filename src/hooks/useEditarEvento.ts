@@ -97,7 +97,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
         })));
       }
 
-      // Cargar invitados del evento con manejo correcto de pets_count
+      // Cargar invitados del evento con todos los campos incluido pets_count
       const { data: invitadosData, error: invitadosError } = await supabase
         .from('guests')
         .select('*')
@@ -106,6 +106,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
       if (invitadosError) {
         console.error('Error cargando invitados:', invitadosError);
       } else if (invitadosData) {
+        console.log('Datos de invitados cargados:', invitadosData);
         setInvitados(invitadosData.map(inv => ({
           id: inv.id,
           name: inv.name,
@@ -116,7 +117,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
           passes_count: inv.passes_count || 1,
           adults_count: inv.adults_count || 1,
           children_count: inv.children_count || 0,
-          pets_count: inv.pets_count || 0, // Leer el valor real de la base de datos
+          pets_count: inv.pets_count || 0,
         })));
       }
 
@@ -221,6 +222,8 @@ export const useEditarEvento = (eventoId: string | undefined) => {
       for (const invitado of invitados) {
         if (!invitado.name.trim()) continue;
 
+        console.log('Guardando invitado:', invitado);
+
         if (invitado.id) {
           // Actualizar invitado existente - incluir pets_count
           const { error: updateError } = await supabase
@@ -232,11 +235,14 @@ export const useEditarEvento = (eventoId: string | undefined) => {
               passes_count: invitado.passes_count,
               adults_count: invitado.adults_count,
               children_count: invitado.children_count,
-              pets_count: invitado.pets_count, // Asegurar que se guarda pets_count
+              pets_count: invitado.pets_count,
             })
             .eq('id', invitado.id);
 
-          if (updateError) throw updateError;
+          if (updateError) {
+            console.error('Error actualizando invitado:', updateError);
+            throw updateError;
+          }
         } else {
           // Crear nuevo invitado - incluir pets_count
           const invitationCode = generarCodigoInvitacion(invitados.indexOf(invitado), codigoEvento, invitado.name);
@@ -259,10 +265,13 @@ export const useEditarEvento = (eventoId: string | undefined) => {
               passes_count: invitado.passes_count,
               adults_count: invitado.adults_count,
               children_count: invitado.children_count,
-              pets_count: invitado.pets_count, // Incluir pets_count al crear
+              pets_count: invitado.pets_count,
             }]);
 
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('Error creando invitado:', insertError);
+            throw insertError;
+          }
         }
       }
 

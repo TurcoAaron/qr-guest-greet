@@ -154,6 +154,7 @@ export type Database = {
           invitation_code: string
           name: string
           passes_count: number
+          pets_count: number
           phone: string | null
           qr_code_data: string
         }
@@ -167,6 +168,7 @@ export type Database = {
           invitation_code: string
           name: string
           passes_count?: number
+          pets_count?: number
           phone?: string | null
           qr_code_data: string
         }
@@ -180,6 +182,7 @@ export type Database = {
           invitation_code?: string
           name?: string
           passes_count?: number
+          pets_count?: number
           phone?: string | null
           qr_code_data?: string
         }
