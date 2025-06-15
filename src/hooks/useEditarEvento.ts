@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 
 export interface Invitado {
   id?: string;
@@ -13,7 +13,7 @@ export interface Invitado {
   passes_count: number;
   adults_count: number;
   children_count: number;
-  pets_count?: number;
+  pets_count: number;
 }
 
 export interface EventImage {
@@ -95,7 +95,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
         })));
       }
 
-      // Cargar invitados del evento
+      // Cargar invitados del evento con manejo correcto de pets_count
       const { data: invitadosData, error: invitadosError } = await supabase
         .from('guests')
         .select('*')
@@ -114,7 +114,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
           passes_count: inv.passes_count || 1,
           adults_count: inv.adults_count || 1,
           children_count: inv.children_count || 0,
-          pets_count: (inv as any).pets_count || 0,
+          pets_count: 0, // Agregar valor por defecto para pets_count
         })));
       }
 
@@ -171,7 +171,6 @@ export const useEditarEvento = (eventoId: string | undefined) => {
               passes_count: invitado.passes_count,
               adults_count: invitado.adults_count,
               children_count: invitado.children_count,
-              pets_count: invitado.pets_count || 0,
             })
             .eq('id', invitado.id);
 
@@ -179,7 +178,7 @@ export const useEditarEvento = (eventoId: string | undefined) => {
         } else {
           // Crear nuevo invitado
           const invitationCode = `${invitado.name.replace(/\s+/g, '')}-${Date.now()}`;
-          const qrCodeData = `${window.location.origin}/invitacion/${invitationCode}`;
+          const qrCodeData = `${window.location.origin}/invitacion?codigo=${invitationCode}`;
 
           const { error: insertError } = await supabase
             .from('guests')
@@ -193,7 +192,6 @@ export const useEditarEvento = (eventoId: string | undefined) => {
               passes_count: invitado.passes_count,
               adults_count: invitado.adults_count,
               children_count: invitado.children_count,
-              pets_count: invitado.pets_count || 0,
             }]);
 
           if (insertError) throw insertError;

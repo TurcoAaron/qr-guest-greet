@@ -226,6 +226,7 @@ export type Database = {
           guest_id: string
           id: string
           passes_count: number
+          pets_count: number | null
           response: string
           updated_at: string
         }
@@ -237,6 +238,7 @@ export type Database = {
           guest_id: string
           id?: string
           passes_count?: number
+          pets_count?: number | null
           response: string
           updated_at?: string
         }
@@ -248,6 +250,7 @@ export type Database = {
           guest_id?: string
           id?: string
           passes_count?: number
+          pets_count?: number | null
           response?: string
           updated_at?: string
         }

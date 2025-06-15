@@ -24,7 +24,7 @@ interface RSVPResponse {
   passes_count: number;
   adults_count: number;
   children_count: number;
-  pets_count?: number;
+  pets_count: number;
   created_at: string;
 }
 

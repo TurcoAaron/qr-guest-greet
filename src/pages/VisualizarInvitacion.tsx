@@ -82,13 +82,21 @@ const VisualizarInvitacion = () => {
         return;
       }
 
-      // Asegurar que pets_count esté disponible
-      const invitadoConMascotas = {
-        ...invitadoData,
-        pets_count: invitadoData.pets_count || 0
+      // Convertir la respuesta de la base de datos al tipo Invitado esperado
+      const invitadoTyped: Invitado = {
+        id: invitadoData.id,
+        name: invitadoData.name,
+        email: invitadoData.email || '',
+        phone: invitadoData.phone || '',
+        invitation_code: invitadoData.invitation_code,
+        qr_code_data: invitadoData.qr_code_data,
+        passes_count: invitadoData.passes_count,
+        adults_count: invitadoData.adults_count,
+        children_count: invitadoData.children_count,
+        pets_count: 0 // Agregar valor por defecto para pets_count
       };
 
-      setInvitado(invitadoConMascotas);
+      setInvitado(invitadoTyped);
       
       // Asegurar que tenemos una fecha válida para la cuenta regresiva
       const eventoConFecha = {
