@@ -1,11 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Download, Trash2, Search, Calendar, UserCheck, UserPlus } from "lucide-react";
+import { Users, Download, Trash2, Search, Calendar, UserCheck, UserPlus, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -19,6 +20,7 @@ const Administrar = () => {
   const [asistencias, setAsistencias] = useState<string[]>([]);
   const [filtro, setFiltro] = useState("");
   const [eventos, setEventos] = useState<any[]>([]);
+  const [eventoSeleccionado, setEventoSeleccionado] = useState<string>("");
   const [invitados, setInvitados] = useState<any[]>([]);
   const [asistenciasDB, setAsistenciasDB] = useState<any[]>([]);
   const [respuestasRSVP, setRespuestasRSVP] = useState<any[]>([]);
@@ -37,10 +39,14 @@ const Administrar = () => {
       // Cargar eventos
       const { data: eventosData } = await supabase
         .from('events')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (eventosData) {
         setEventos(eventosData);
+        if (eventosData.length > 0 && !eventoSeleccionado) {
+          setEventoSeleccionado(eventosData[0].id);
+        }
       }
 
       // Cargar invitados
@@ -57,7 +63,7 @@ const Administrar = () => {
         .from('attendances')
         .select(`
           *,
-          guests (name, email),
+          guests (name, email, event_id),
           events (name)
         `);
       
@@ -70,7 +76,7 @@ const Administrar = () => {
         .from('rsvp_responses')
         .select(`
           *,
-          guests (name, email),
+          guests (name, email, event_id),
           events (name)
         `);
       
@@ -142,22 +148,34 @@ const Administrar = () => {
     }
   };
 
-  const estadisticas = {
-    total: asistencias.length,
-    hoy: asistenciasProcesadas.filter(a => 
-      a.fecha === new Date().toLocaleDateString()
-    ).length,
-    ultimaHora: asistenciasProcesadas.filter(a => 
-      Date.now() - a.timestamp < 3600000
-    ).length,
-    confirmados: respuestasRSVP.filter(r => r.response === 'attending').length,
-    presentes: asistenciasDB.length,
+  // Estadísticas generales
+  const estadisticasGenerales = {
+    totalEventos: eventos.length,
+    eventosActivos: eventos.filter(e => e.status === 'active').length,
+    totalConfirmados: respuestasRSVP.filter(r => r.response === 'attending').length,
+    totalPresentes: asistenciasDB.length,
+    totalAsistenciasLocal: asistencias.length,
+  };
+
+  // Estadísticas por evento seleccionado
+  const eventoActual = eventos.find(e => e.id === eventoSeleccionado);
+  const confirmadosEvento = respuestasRSVP.filter(r => 
+    r.response === 'attending' && r.guests?.event_id === eventoSeleccionado
+  );
+  const presentesEvento = asistenciasDB.filter(a => 
+    a.guests?.event_id === eventoSeleccionado
+  );
+
+  const estadisticasEvento = {
+    confirmados: confirmadosEvento.length,
+    presentes: presentesEvento.length,
+    invitados: invitados.filter(i => i.event_id === eventoSeleccionado).length,
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 py-8">
       <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-8">
           
           {/* Header */}
           <div className="text-center">
@@ -165,74 +183,37 @@ const Administrar = () => {
               Panel de Administración
             </h1>
             <p className="text-gray-600">
-              Gestiona y monitorea las asistencias del evento
+              Gestiona y monitorea las asistencias de todos los eventos
             </p>
           </div>
 
-          {/* Estadísticas */}
-          <div className="grid md:grid-cols-6 gap-6">
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Users className="w-8 h-8 mx-auto text-blue-600 mb-2" />
-                <div className="text-2xl font-bold text-gray-800">{estadisticas.total}</div>
-                <div className="text-sm text-gray-600">Total Asistencias (Local)</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Calendar className="w-8 h-8 mx-auto text-green-600 mb-2" />
-                <div className="text-2xl font-bold text-gray-800">{estadisticas.hoy}</div>
-                <div className="text-sm text-gray-600">Hoy</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 text-center">
-                <div className="w-8 h-8 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-2">
-                  <span className="text-orange-600 font-bold text-sm">1H</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-800">{estadisticas.ultimaHora}</div>
-                <div className="text-sm text-gray-600">Última Hora</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 text-center">
-                <UserCheck className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
-                <div className="text-2xl font-bold text-gray-800">{estadisticas.confirmados}</div>
-                <div className="text-sm text-gray-600">Confirmados</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 text-center">
-                <UserPlus className="w-8 h-8 mx-auto text-purple-600 mb-2" />
-                <div className="text-2xl font-bold text-gray-800">{estadisticas.presentes}</div>
-                <div className="text-sm text-gray-600">Presentes</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 text-center">
-                <div className="w-8 h-8 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-2">
-                  <span className="text-purple-600 font-bold text-xs">AVG</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-800">
-                  {asistencias.length > 0 ? Math.round(asistencias.length / Math.max(1, new Set(asistenciasProcesadas.map(a => a.fecha)).size)) : 0}
-                </div>
-                <div className="text-sm text-gray-600">Por Día</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Controles */}
+          {/* Filtros principales */}
           <Card>
             <CardHeader>
-              <CardTitle>Controles de Administración</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <Filter className="w-5 h-5" />
+                <span>Filtros y Controles</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-4 items-center justify-between">
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex items-center space-x-2 min-w-[250px]">
+                  <span className="text-sm font-medium">Evento:</span>
+                  <Select value={eventoSeleccionado} onValueChange={setEventoSeleccionado}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Selecciona un evento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos los eventos</SelectItem>
+                      {eventos.map((evento) => (
+                        <SelectItem key={evento.id} value={evento.id}>
+                          {evento.name} ({evento.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 <div className="flex items-center space-x-2 flex-1 min-w-[200px]">
                   <Search className="w-4 h-4 text-gray-400" />
                   <Input
@@ -250,7 +231,7 @@ const Administrar = () => {
                     disabled={asistencias.length === 0}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Exportar CSV
+                    Exportar
                   </Button>
                   
                   <Button
@@ -259,106 +240,269 @@ const Administrar = () => {
                     disabled={asistencias.length === 0}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Limpiar Datos
+                    Limpiar
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Invitados Confirmados */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Invitados que Confirmaron Asistencia</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {respuestasRSVP.filter(r => r.response === 'attending').length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No hay confirmaciones de asistencia aún
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Evento</TableHead>
-                      <TableHead>Fecha Confirmación</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {respuestasRSVP
-                      .filter(r => r.response === 'attending')
-                      .map((rsvp) => (
-                      <TableRow key={rsvp.id}>
-                        <TableCell className="font-medium">{rsvp.guests?.name}</TableCell>
-                        <TableCell>{rsvp.guests?.email}</TableCell>
-                        <TableCell>{rsvp.events?.name}</TableCell>
-                        <TableCell>{new Date(rsvp.created_at).toLocaleDateString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <Tabs defaultValue="general" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="general">Vista General</TabsTrigger>
+              <TabsTrigger value="evento">Por Evento</TabsTrigger>
+            </TabsList>
 
-          {/* Presentes en el Evento */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Presentes en el Evento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {asistenciasDB.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No hay asistencias registradas aún
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Evento</TableHead>
-                      <TableHead>Hora de Llegada</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {asistenciasDB.map((asistencia) => (
-                      <TableRow key={asistencia.id}>
-                        <TableCell className="font-medium">{asistencia.guests?.name}</TableCell>
-                        <TableCell>{asistencia.guests?.email}</TableCell>
-                        <TableCell>{asistencia.events?.name}</TableCell>
-                        <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+            <TabsContent value="general" className="space-y-6">
+              {/* Estadísticas generales */}
+              <div className="grid md:grid-cols-5 gap-6">
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Calendar className="w-8 h-8 mx-auto text-blue-600 mb-2" />
+                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalEventos}</div>
+                    <div className="text-sm text-gray-600">Total Eventos</div>
+                  </CardContent>
+                </Card>
 
-          {/* Lista de asistencias locales */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Registro de Asistencias (Local)
-                {filtro && (
-                  <span className="text-sm font-normal text-gray-600 ml-2">
-                    ({asistenciasFiltradas.length} de {asistencias.length} registros)
-                  </span>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {asistenciasFiltradas.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  {asistencias.length === 0 
-                    ? "No hay asistencias registradas aún" 
-                    : "No se encontraron coincidencias con el filtro"
-                  }
-                </div>
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <div className="w-8 h-8 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
+                      <span className="text-green-600 font-bold text-sm">ACT</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.eventosActivos}</div>
+                    <div className="text-sm text-gray-600">Eventos Activos</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <UserCheck className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
+                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalConfirmados}</div>
+                    <div className="text-sm text-gray-600">Total Confirmados</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <UserPlus className="w-8 h-8 mx-auto text-purple-600 mb-2" />
+                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalPresentes}</div>
+                    <div className="text-sm text-gray-600">Total Presentes</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Users className="w-8 h-8 mx-auto text-orange-600 mb-2" />
+                    <div className="text-2xl font-bold text-gray-800">{estadisticasGenerales.totalAsistenciasLocal}</div>
+                    <div className="text-sm text-gray-600">Asistencias Local</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Resumen por eventos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resumen por Eventos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Evento</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Invitados</TableHead>
+                        <TableHead>Confirmados</TableHead>
+                        <TableHead>Presentes</TableHead>
+                        <TableHead>% Asistencia</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {eventos.map((evento) => {
+                        const invitadosEvento = invitados.filter(i => i.event_id === evento.id).length;
+                        const confirmadosEvento = respuestasRSVP.filter(r => 
+                          r.response === 'attending' && r.guests?.event_id === evento.id
+                        ).length;
+                        const presentesEvento = asistenciasDB.filter(a => 
+                          a.guests?.event_id === evento.id
+                        ).length;
+                        const porcentaje = confirmadosEvento > 0 ? Math.round((presentesEvento / confirmadosEvento) * 100) : 0;
+
+                        return (
+                          <TableRow key={evento.id}>
+                            <TableCell className="font-medium">{evento.name}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                evento.status === 'active' ? 'bg-green-100 text-green-800' :
+                                evento.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {evento.status}
+                              </span>
+                            </TableCell>
+                            <TableCell>{invitadosEvento}</TableCell>
+                            <TableCell>{confirmadosEvento}</TableCell>
+                            <TableCell>{presentesEvento}</TableCell>
+                            <TableCell>{porcentaje}%</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="evento" className="space-y-6">
+              {eventoSeleccionado && eventoActual ? (
+                <>
+                  {/* Header del evento */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-xl">{eventoActual.name}</CardTitle>
+                      <p className="text-gray-600">{eventoActual.description}</p>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>📅 {new Date(eventoActual.start_date || eventoActual.date).toLocaleDateString()}</span>
+                        <span>📍 {eventoActual.location}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          eventoActual.status === 'active' ? 'bg-green-100 text-green-800' :
+                          eventoActual.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {eventoActual.status}
+                        </span>
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  {/* Estadísticas del evento */}
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <Users className="w-8 h-8 mx-auto text-blue-600 mb-2" />
+                        <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.invitados}</div>
+                        <div className="text-sm text-gray-600">Invitados Totales</div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <UserCheck className="w-8 h-8 mx-auto text-emerald-600 mb-2" />
+                        <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.confirmados}</div>
+                        <div className="text-sm text-gray-600">Confirmaron</div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <UserPlus className="w-8 h-8 mx-auto text-purple-600 mb-2" />
+                        <div className="text-2xl font-bold text-gray-800">{estadisticasEvento.presentes}</div>
+                        <div className="text-sm text-gray-600">Presentes</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Confirmados del evento */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Invitados que Confirmaron</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {confirmadosEvento.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          No hay confirmaciones para este evento
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nombre</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Fecha Confirmación</TableHead>
+                              <TableHead>Estado</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {confirmadosEvento.map((rsvp) => {
+                              const estaPresente = presentesEvento.some(p => p.guest_id === rsvp.guest_id);
+                              return (
+                                <TableRow key={rsvp.id}>
+                                  <TableCell className="font-medium">{rsvp.guests?.name}</TableCell>
+                                  <TableCell>{rsvp.guests?.email}</TableCell>
+                                  <TableCell>{new Date(rsvp.created_at).toLocaleDateString()}</TableCell>
+                                  <TableCell>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      estaPresente ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                      {estaPresente ? 'Presente' : 'Pendiente'}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Presentes del evento */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Presentes en el Evento</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {presentesEvento.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          No hay asistencias registradas para este evento
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nombre</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Hora de Llegada</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {presentesEvento.map((asistencia) => (
+                              <TableRow key={asistencia.id}>
+                                <TableCell className="font-medium">{asistencia.guests?.name}</TableCell>
+                                <TableCell>{asistencia.guests?.email}</TableCell>
+                                <TableCell>{new Date(asistencia.checked_in_at).toLocaleString()}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  </Card>
+                </>
               ) : (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Selecciona un evento para ver los detalles</p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          {/* Registro de asistencias locales - solo si hay datos */}
+          {asistencias.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Registro de Asistencias (Local)
+                  {filtro && (
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      ({asistenciasFiltradas.length} de {asistencias.length} registros)
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -385,9 +529,9 @@ const Administrar = () => {
                     </tbody>
                   </table>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
