@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -19,43 +18,5 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'invitation-templates': [
-            './src/components/invitation-templates/ModernTemplate.tsx',
-            './src/components/invitation-templates/ElegantTemplate.tsx',
-            './src/components/invitation-templates/FestiveTemplate.tsx',
-            './src/components/invitation-templates/CorporateTemplate.tsx',
-            './src/components/invitation-templates/MinimalistTemplate.tsx',
-            './src/components/invitation-templates/TemplateRenderer.tsx',
-          ],
-          'vendor': ['react', 'react-dom'],
-          'ui': [
-            './src/components/ui/button.tsx',
-            './src/components/ui/card.tsx',
-            './src/components/ui/input.tsx',
-            './src/components/ui/toast.tsx',
-          ],
-        },
-      },
-    },
-    sourcemap: false,
-    minify: 'esbuild',
-    chunkSizeWarningLimit: 1000,
-    target: 'esnext',
-  },
-  assetsInclude: ['**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif'],
-  optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      '@supabase/supabase-js',
-      'lucide-react',
-      'qrcode.react',
-    ],
   },
 }));

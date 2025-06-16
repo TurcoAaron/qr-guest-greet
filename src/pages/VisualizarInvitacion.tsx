@@ -39,7 +39,6 @@ const VisualizarInvitacion = () => {
   const [invitado, setInvitado] = useState<Invitado | null>(null);
   const [evento, setEvento] = useState<Evento | null>(null);
   const [loading, setLoading] = useState(true);
-  const [templateError, setTemplateError] = useState<string | null>(null);
 
   useEffect(() => {
     const codigo = searchParams.get("codigo");
@@ -74,7 +73,6 @@ const VisualizarInvitacion = () => {
         .single();
 
       if (invitadoError || !invitadoData) {
-        console.error('Error cargando invitación:', invitadoError);
         toast({
           title: "Error",
           description: "No se encontró la invitación",
@@ -101,18 +99,15 @@ const VisualizarInvitacion = () => {
 
       setInvitado(invitadoTyped);
       
-      // Asegurar que tenemos una fecha válida para la cuenta regresiva y template válida
+      // Asegurar que tenemos una fecha válida para la cuenta regresiva
       const eventoConFecha = {
         ...invitadoData.events,
-        start_date: invitadoData.events.start_date || invitadoData.events.date,
-        template_id: invitadoData.events.template_id || 'modern' // Fallback a modern si no hay template
+        start_date: invitadoData.events.start_date || invitadoData.events.date
       };
       
-      console.log('Template ID a usar:', eventoConFecha.template_id);
       setEvento(eventoConFecha);
     } catch (error) {
       console.error('Error cargando invitación:', error);
-      setTemplateError(`Error de carga: ${error instanceof Error ? error.message : 'Error desconocido'}`);
       toast({
         title: "Error",
         description: "No se pudo cargar la invitación",
@@ -129,26 +124,6 @@ const VisualizarInvitacion = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-purple-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 text-lg">Cargando invitación...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (templateError) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
-        <div className="text-center bg-white p-12 rounded-2xl shadow-2xl max-w-md">
-          <h2 className="text-2xl font-bold mb-4 text-red-600">Error de Template</h2>
-          <p className="text-gray-600 mb-4">{templateError}</p>
-          <p className="text-sm text-gray-500 mb-8">
-            Por favor, contacta al organizador del evento.
-          </p>
-          <button 
-            onClick={() => navigate('/')}
-            className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-colors"
-          >
-            Volver al inicio
-          </button>
         </div>
       </div>
     );
